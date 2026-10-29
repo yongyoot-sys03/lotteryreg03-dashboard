@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import spaces
 
-# 1. ฟังก์ชันโหลดและประมวลผลข้อมูลจริงจาก Google Sheets
+# โหลดข้อมูลจริงจาก Google Sheets
 def load_real_data():
     try:
         url = "https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029"
@@ -33,6 +33,16 @@ def get_risk_info(total):
 
 df_base = load_real_data()
 
+# ฟังก์ชันอัปเดต Dropdown สาขา ให้สัมพันธ์กับกลุ่ม ปจ.
+def sync_branch_options(selected_region):
+    df = load_real_data() if df_base.empty else df_base.copy()
+    if df.empty or selected_region == "ALL":
+        branches = ["ALL"] + sorted(df['Branch'].dropna().unique().tolist())
+    else:
+        filtered = df[df['Region'] == selected_region]
+        branches = ["ALL"] + sorted(filtered['Branch'].dropna().unique().tolist())
+    return gr.update(choices=branches, value="ALL")
+
 @spaces.GPU
 def update_dashboard(selected_time_days, selected_region, selected_branch, risk_critical, risk_watch, risk_normal):
     df = load_real_data() if df_base.empty else df_base.copy()
@@ -58,7 +68,6 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     latest_df['⚠️ SLA Risk Score'] = [r[2] for r in risk_info]
     latest_df['Risk Code'] = [r[3] for r in risk_info]
 
-    # กรองตามติ๊กเลือกระดับความเสี่ยง
     allowed_risks = []
     if risk_critical: allowed_risks.append(1)
     if risk_watch: allowed_risks.append(2)
@@ -73,28 +82,27 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
 
     top5 = latest_df.head(5).sort_values(by='Total', ascending=True)
 
-    # 1. แบนเนอร์เตือนภัย AI Alert Banner
+    # 1. Alert Banner
     if not top5.empty and top5.iloc[-1]['Total'] >= 100:
         crit_branch = top5.iloc[-1]['Branch']
         banner_html = f"""
         <div class="alert-banner">
-            <span style="font-size:16px;">🚨 <b>AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</b></span>
+            <span style="font-size:15px; font-weight:700;">🚨 AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
             <span>[ 🔴 วิกฤต: ประเมินพบ 'สาขา{crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
         </div>
         """
     else:
         banner_html = """
-        <div class="alert-banner" style="background: linear-gradient(90deg, #10B981, #059669);">
-            <span style="font-size:16px;">✅ <b>AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</b></span>
+        <div class="alert-banner alert-safe">
+            <span style="font-size:15px; font-weight:700;">✅ AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
             <span>[ 🟢 ปกติ: ปริมาณงานจัดส่งสลากฯ ของทุกที่ทำการเป็นไปตามมาตรฐาน SLA ของ ปณท. ]</span>
         </div>
         """
 
-    # ชื่อแสดงหัวข้อระดับ
     level_name = f"สาขา.{selected_branch}" if selected_branch != "ALL" else (f"กลุ่ม ปจ.{selected_region}" if selected_region != "ALL" else "ภาพรวม ปข.3")
     kpi_header_html = f"""<div class="section-title">📊 EXECUTIVE KPIs (ข้อมูลระดับ: {level_name})</div>"""
 
-    # 2. Executive KPI Cards 3 ช่องแบบดั้งเดิม
+    # 2. Executive KPI Cards
     kpi_cards_html = f"""
     <div class="kpi-row">
         <div class="kpi-card">
@@ -106,7 +114,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-title">📋 ค้าง S/K/L (รับแล้ว/รอส่งคืน)</div>
+                <div class="kpi-title">📋 ค้าง S/K/L (รับแล้ว/ส่งคืน)</div>
                 <div class="kpi-num">{total_s:,} <span class="kpi-unit">ชิ้น</span></div>
             </div>
             <div class="kpi-badge badge-orange">📋</div>
@@ -121,33 +129,34 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     </div>
     """
 
-    # 3. Line Chart
+    # 3. Line Chart ปรับปรุงแกน X, Y และสเกลตัวเลข
     daily_trend = filtered_df.groupby('Date_parsed')[['P', 'S']].sum().reset_index().sort_values('Date_parsed')
     fig_line = go.Figure()
     if not daily_trend.empty:
         fig_line.add_trace(go.Scatter(
-            x=daily_trend['Date_parsed'], y=daily_trend['P'],
-            mode='lines+markers', name='ค้าง P',
+            x=daily_trend['Date_parsed'].dt.strftime('%b %d'), y=daily_trend['P'],
+            mode='lines+markers', name='ค้าง P (รอจ่าย)',
             line=dict(color='#EF4444', width=2.5),
             marker=dict(size=6, color='#EF4444')
         ))
         fig_line.add_trace(go.Scatter(
-            x=daily_trend['Date_parsed'], y=daily_trend['S'],
+            x=daily_trend['Date_parsed'].dt.strftime('%b %d'), y=daily_trend['S'],
             mode='lines+markers', name='ค้าง S/K/L (รับแล้ว/ส่งคืน)',
             line=dict(color='#F59E0B', width=2.5),
             marker=dict(size=6, color='#F59E0B')
         ))
     fig_line.update_layout(
+        template="plotly_white",
         paper_bgcolor='rgba(255,255,255,0.7)',
         plot_bgcolor='rgba(255,255,255,0.5)',
-        margin=dict(l=20, r=20, t=25, b=20),
+        margin=dict(l=35, r=15, t=25, b=25),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=11, family="Kanit")),
-        xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(size=10, family="Kanit")),
-        yaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(size=10, family="Kanit")),
-        height=280
+        xaxis=dict(showgrid=True, gridcolor='#E2E8F0', type='category', tickfont=dict(size=10, family="Kanit")),
+        yaxis=dict(showgrid=True, gridcolor='#E2E8F0', rangemode='tozero', tickfont=dict(size=10, family="Kanit")),
+        height=270
     )
 
-    # 4. Bar Chart Top 5
+    # 4. Bar Chart ปรับตำแหน่งแกน X, Y และแสดงตัวเลขบนแท่ง
     fig_bar = go.Figure()
     if not top5.empty:
         fig_bar.add_trace(go.Bar(
@@ -164,22 +173,22 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         ))
     fig_bar.update_layout(
         barmode='stack',
+        template="plotly_white",
         paper_bgcolor='rgba(255,255,255,0.7)',
         plot_bgcolor='rgba(255,255,255,0.5)',
-        margin=dict(l=20, r=20, t=25, b=20),
+        margin=dict(l=65, r=15, t=25, b=25),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=11, family="Kanit")),
-        xaxis=dict(showgrid=True, gridcolor='#E2E8F0', tickfont=dict(size=10, family="Kanit")),
+        xaxis=dict(showgrid=True, gridcolor='#E2E8F0', rangemode='tozero', tickfont=dict(size=10, family="Kanit")),
         yaxis=dict(showgrid=False, tickfont=dict(size=11, family="Kanit")),
-        height=280
+        height=270
     )
 
-    # ตารางรายละเอียดด้านล่าง
     grid_df = latest_df[['Branch', 'P', 'S', '⏱️ ประเมินวันค้าง', '⚠️ SLA Risk Score']].rename(
         columns={'Branch': 'สาขา (ปจ.)', 'P': 'ค้าง P', 'S': 'ค้าง S/K/L', '⏱️ ประเมินวันค้าง': '⏱️ ประเมินวันค้าง', '⚠️ SLA Risk Score': '⚠️ SLA Risk Score'}
     )
     return banner_html, kpi_header_html, kpi_cards_html, fig_line, fig_bar, grid_df
 
-# CSS จำลองดีไซน์เดิมตรงตามภาพ
+# CSS สไตล์ภาพต้นฉบับ
 custom_css = """
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
@@ -187,13 +196,34 @@ custom_css = """
     font-family: 'Kanit', sans-serif !important;
 }
 
-/* พื้นหลังสีม่วงพาสเทล-ฟ้าตามต้นฉบับ */
 body, .gradio-container {
     background: linear-gradient(135deg, #d8b4fe 0%, #a5b4fc 50%, #93c5fd 100%) !important;
     min-height: 100vh;
 }
 
-/* แถบ Sidebar ซ้าย */
+/* แผง 3 โลโก้ด้านบน Sidebar */
+.top-logo-bar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.logo-item {
+    width: 36px;
+    height: 36px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    border: 1px solid rgba(255,255,255,0.9);
+}
+
+/* แผงควบคุม Sidebar ซ้าย */
 .sidebar-panel {
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(16px);
@@ -203,7 +233,7 @@ body, .gradio-container {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* กล่อง Main Header */
+/* Main Header */
 .main-header {
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(16px);
@@ -238,10 +268,9 @@ body, .gradio-container {
     font-size: 13px;
     color: #334155;
     font-weight: 500;
-    cursor: default;
 }
 
-/* แถบแดง AI Alert Banner */
+/* Alert Banner */
 .alert-banner {
     background: linear-gradient(90deg, #FF4B2B, #FF416C);
     color: #FFFFFF;
@@ -255,7 +284,11 @@ body, .gradio-container {
     box-shadow: 0 4px 12px rgba(255, 75, 43, 0.25);
 }
 
-/* Section Header */
+.alert-safe {
+    background: linear-gradient(90deg, #10B981, #059669) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
 .section-title {
     font-size: 15px;
     font-weight: 700;
@@ -263,7 +296,7 @@ body, .gradio-container {
     margin-bottom: 10px;
 }
 
-/* แถบ KPI Cards */
+/* KPI Cards */
 .kpi-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -317,7 +350,7 @@ body, .gradio-container {
 .badge-orange { background: linear-gradient(135deg, #F59E0B, #D97706); }
 .badge-darkred { background: linear-gradient(135deg, #DC2626, #991B1B); font-weight: bold; }
 
-/* กล่องครอบการ์ดกระจก */
+/* กล่องครอบการ์ด */
 .glass-box {
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(14px);
@@ -335,7 +368,6 @@ body, .gradio-container {
     margin-bottom: 8px;
 }
 
-/* ปุ่มและตัวเลือก Sidebar */
 .refresh-btn {
     background: #0284C7 !important;
     color: white !important;
@@ -350,9 +382,9 @@ body, .gradio-container {
     border: 1px solid #CBD5E1 !important;
     border-radius: 8px !important;
     margin-top: 6px !important;
+    font-weight: 500 !important;
 }
 
-/* กล่องคำอธิบายล่างสุด */
 .legend-box {
     background: rgba(255, 255, 255, 0.8);
     border-radius: 12px;
@@ -370,12 +402,19 @@ branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if
 with gr.Blocks(title="ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล", css=custom_css) as demo:
     
     with gr.Row():
-        # ========== แถบซ้าย: แผงควบคุม (SIDEBAR) ==========
+        # ========== แถบซ้าย: SIDEBAR ==========
         with gr.Column(scale=2, elem_classes=["sidebar-panel"]):
+            # ข้อ 1: โลโก้ 3 รูปภาพแนวนอนบนแถบ Sidebar
             gr.HTML("""
-            <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:12px;">⚙️ แผงควบคุม</div>
+            <div class="top-logo-bar">
+                <div class="logo-item" title="สำนักงานไปรษณีย์">🏛️</div>
+                <div class="logo-item" title="ระบบสถิติ SLA">📊</div>
+                <div class="logo-item" title="ระบบจัดส่งสลากฯ">📮</div>
+            </div>
+            <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:10px;">⚙️ แผงควบคุม</div>
             <div style="font-size:12px; font-weight:600; color:#475569;">[ 🕒 วิเคราะห์ช่วงเวลา ]</div>
             """)
+            
             time_filter = gr.Radio(
                 choices=[("วันนี้", 1), ("3 วัน", 3), ("7 วัน", 7), ("15 วัน", 15), ("1 เดือน", 30), ("3 เดือน", 90), ("6 เดือน", 180), ("1 ปี", 365)],
                 value=7, label="", show_label=False
@@ -394,11 +433,12 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                 risk_norm = gr.Checkbox(value=True, label="🟢 ปกติ")
                 
             refresh_btn = gr.Button("🔄 Refresh Data", elem_classes=["refresh-btn"])
+            
+            # ข้อ 4: ปุ่ม Export PDF / JPG ที่ทำงานด้วย JavaScript window.print()
             export_btn = gr.Button("📄 Export PDF / JPG", elem_classes=["export-btn"])
 
-        # ========== พื้นที่ขวา: แดชบอร์ดหลัก (MAIN DASHBOARD) ==========
+        # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
-            # 1. Main Header
             gr.HTML("""
             <div class="main-header">
                 <div>
@@ -409,14 +449,10 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             </div>
             """)
 
-            # 2. Alert Banner
             alert_banner = gr.HTML()
-
-            # 3. Executive KPIs
             kpi_header = gr.HTML()
             kpi_cards = gr.HTML()
 
-            # 4. Visual Analytics Charts
             with gr.Column(elem_classes=["glass-box"]):
                 gr.HTML("""<div class="section-title">📊 VISUAL ANALYTICS (การปฏิบัติตาม SLA ประจำงวด)</div>""")
                 with gr.Row():
@@ -433,12 +469,10 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                         """)
                         chart_bar = gr.Plot()
 
-            # 5. Data Grid
             with gr.Column(elem_classes=["glass-box"]):
                 gr.HTML("""<div class="section-title">📋 ML INSIGHTS DATA GRID (ตารางข้อมูลการให้บริการ)</div>""")
                 table_grid = gr.Dataframe(interactive=False)
 
-            # 6. กล่องคำอธิบายล่างสุด
             gr.HTML("""
             <div class="legend-box">
                 <b>ℹ️ คำอธิบายเกณฑ์การประเมิน SLA (Rule-based & ML Logic):</b><br>
@@ -448,13 +482,25 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             </div>
             """)
 
+    # Event Handlers
     inputs = [time_filter, region_filter, branch_filter, risk_crit, risk_wat, risk_norm]
     outputs = [alert_banner, kpi_header, kpi_cards, chart_line, chart_bar, table_grid]
 
+    # ข้อ 3: การเชื่อมโยง กลุ่ม ปจ. -> ชื่อที่ทำการ
+    region_filter.change(fn=sync_branch_options, inputs=[region_filter], outputs=[branch_filter])
+
+    # Event การอัปเดตข้อมูลบน Dashboard
     refresh_btn.click(fn=update_dashboard, inputs=inputs, outputs=outputs)
     time_filter.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
     region_filter.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
     branch_filter.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
+    risk_crit.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
+    risk_wat.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
+    risk_norm.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
+    
+    # ข้อ 4: คำสั่งพิมพ์ Export เมื่อคลิกปุ่ม
+    export_btn.click(fn=None, js="() => { window.print(); }")
+
     demo.load(fn=update_dashboard, inputs=inputs, outputs=outputs)
 
 if __name__ == "__main__":
