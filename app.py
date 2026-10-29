@@ -113,14 +113,14 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         banner_html = f"""
         <div class="alert-banner">
             <span style="font-size:15px; font-weight:700;">🚨 AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🔴 สุ่มเสี่ยง: ประเมินพบ 'ที่ทำการ {crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
+            <span>[ 🔴 สุ่มเสี่ยง: ประเมินพบ '{crit_branch}' คาดว่าจะดำเนินการไม่ได้ตามมาตรฐาน SLA ที่ ปณท กำหนด! ]</span>
         </div>
         """
     else:
         banner_html = """
         <div class="alert-banner alert-safe">
             <span style="font-size:15px; font-weight:700;">✅ AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🟢 ปกติ: ปริมาณงานจัดส่งสลากฯ ของทุกที่ทำการเป็นไปตามมาตรฐาน SLA ของ ปณท. ]</span>
+            <span>[ 🟢 ปกติ: ปริมาณงานจัดส่งสลากฯ ของทุกที่ทำการเป็นไปตามมาตรฐาน SLA ของ ปณท]</span>
         </div>
         """
 
@@ -732,7 +732,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             gr.HTML("""
             <div class="legend-box">
                 <b>ℹ️ คำอธิบายเกณฑ์การประเมิน SLA (Rule-based & ML Logic):</b><br>
-                • <b>ค้าง P:</b> สถานะ 'รอจ่าย ณ ที่ทำการ' | <b>ค้าง S/K/L:</b> สถานะ 'ผู้รับได้รับเรียบร้อย/รอส่งคืน/ส่งต่อ' (ระบุตามสถานะระบบ ปณท.)<br>
+                • <b>ค้าง P:</b> สถานะ 'รอจ่าย ณ ที่ทำการ' | <b>ค้าง S/K/L:</b> สถานะ 'ผู้รับได้รับเรียบร้อย/รอส่งคืน/ส่งต่อ' (ระบุตามสถานะระบบ QMS-ปณท)<br>
                 • <span style="color:#DC2626;">🔴 สุ่มเสี่ยง:</span> ยอดค้างสะสม ≥ 100 ชิ้น หรือ ประมาณการตกค้างสะสมเกิน 3 วัน หรือ ประเมินมีความเสี่ยงตกเกณฑ์มาตรฐานอย่างยิ่ง<br>
                 • <span style="color:#D97706;">🟡 เฝ้าระวัง:</span> ยอดสะสม 30-99 ชิ้น หรือ คาดการณ์ตกค้าง 2-3 วัน หรือ มีแนวโน้มการนำจ่ายช้ากว่ากรอบเวลา
             </div>
