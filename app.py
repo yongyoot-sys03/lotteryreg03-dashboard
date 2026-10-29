@@ -654,17 +654,18 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
     with gr.Row():
         # ========== แถบซ้าย: แผงควบคุม (SIDEBAR) ==========
         with gr.Column(scale=2, elem_classes=["sidebar-panel"]):
+            <!-- แผง 3 โลโก้แบบคลิกเปิดแท็บใหม่ได้ -->
             gr.HTML("""
             <div class="top-logo-container">
-                <div class="logo-box">
-                    <img src="https://i.postimg.cc/90G7q1zb/36272783-2092308694112983-4522613958690996224-n.jpg" alt="Logo 1">
-                </div>
-                <div class="logo-box">
-                    <img src="https://i.postimg.cc/kGxbtwDw/480939523-952543977058068-1004086044975536579-n.jpg" alt="Logo 2">
-                </div>
-                <div class="logo-box">
-                    <img src="https://i.postimg.cc/fyx905kK/Logo-takr-aya-(3).png" alt="Logo 3">
-                </div>
+                <a href="http://10.253.23.3:84/" target="_blank" rel="noopener noreferrer" class="logo-box" title="สลากฯ x ปณท">
+                    <img src="https://i.postimg.cc/90G7q1zb/36272783-2092308694112983-4522613958690996224-n.jpg" alt="สลากฯ x ปณท">
+                </a>
+                <a href="https://www.thailandpost.co.th/th/index/" target="_blank" rel="noopener noreferrer" class="logo-box" title="เว็บไซต์ไปรษณีย์ไทย">
+                    <img src="https://i.postimg.cc/kGxbtwDw/480939523-952543977058068-1004086044975536579-n.jpg" alt="เว็บไซต์ไปรษณีย์ไทย">
+                </a>
+                <a href="https://track.thailandpost.co.th" target="_blank" rel="noopener noreferrer" class="logo-box" title="QMS ปณท">
+                    <img src="https://i.postimg.cc/fyx905kK/Logo-takr-aya-(3).png" alt="QMS ปณท">
+                </a>
             </div>
             <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:10px;">⚙️ แผงควบคุม</div>
             <div style="font-size:12px; font-weight:600; color:#475569;">[ 🕒 วิเคราะห์ช่วงเวลา ]</div>
