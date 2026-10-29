@@ -308,7 +308,7 @@ body, .gradio-container {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* ปรับแต่งแผงปุ่มช่วงเวลา 3 คอลัมน์แนวตั้ง */
+/* บังคับให้ Radio Grid ไหลจากบนลงล่างแยกเป็น 3 คอลัมน์แนวตั้ง */
 .time-radio-grid {
     background: transparent !important;
     border: none !important;
@@ -317,7 +317,9 @@ body, .gradio-container {
 
 .time-radio-grid .wrap {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-auto-flow: column !important; /* บังคับให้เรียงลงแนวตั้งก่อน */
+    grid-template-rows: repeat(4, 1fr) !important; /* คอลัมน์แรกมี 4 แถว (1, 3, 7, 15 วัน) */
+    grid-template-columns: repeat(3, 1fr) !important; /* 3 คอลัมน์เท่ากัน */
     gap: 6px !important;
 }
 
@@ -330,22 +332,20 @@ body, .gradio-container {
     justify-content: center !important;
     align-items: center !important;
     cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    min-height: 32px !important;
 }
 
 .time-radio-grid label:hover {
     background: #FFFFFF !important;
     border-color: #94A3B8 !important;
-    transform: translateY(-1px) !important;
 }
 
-/* เมื่อถูกเลือก */
+/* ปุ่มที่ถูกเลือก */
 .time-radio-grid label.selected {
     background: #0284C7 !important;
     border-color: #0284C7 !important;
     color: #FFFFFF !important;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
 }
 
 .time-radio-grid label.selected span {
@@ -357,10 +357,9 @@ body, .gradio-container {
     font-size: 11px !important;
     font-weight: 500 !important;
     color: #334155 !important;
-    margin: 0 !important;
 }
 
-/* ซ่อนปุ่มจุดกลม Radio ดั้งเดิม */
+/* ซ่อนจุดกลมดั้งเดิม */
 .time-radio-grid input[type="radio"] {
     display: none !important;
 }
@@ -536,11 +535,16 @@ region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุ�
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
 
 # จัดลำดับตัวเลือกให้อ่านไหลลงตาม 3 คอลัมน์แนวตั้ง: วัน (คอลัมน์ 1) | เดือน (คอลัมน์ 2) | ปี (คอลัมน์ 3)
+# เรียงลำดับตามแนวตั้ง: กลุ่มวัน 4 ค่า -> กลุ่มเดือน 3 ค่า -> กลุ่มปี 1 ค่า
 time_choices = [
-    ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
-    ("3 วัน", 3), ("3 เดือน", 90),
-    ("7 วัน", 7), ("6 เดือน", 180),
-    ("15 วัน", 15)
+    ("1 วัน", 1),
+    ("3 วัน", 3),
+    ("7 วัน", 7),
+    ("15 วัน", 15),
+    ("1 เดือน", 30),
+    ("3 เดือน", 90),
+    ("6 เดือน", 180),
+    ("1 ปี", 365)
 ]
 # กรองตัวเลือกจริงสำหรับ Radio
 clean_time_choices = [
