@@ -272,6 +272,7 @@ body, .gradio-container {
     min-height: 100vh;
 }
 
+/* ================= แผง 3 โลโก้ด้านบน ================= */
 .top-logo-container {
     display: flex;
     justify-content: center;
@@ -282,6 +283,7 @@ body, .gradio-container {
     background: rgba(255, 255, 255, 0.5);
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .logo-box {
@@ -295,6 +297,15 @@ body, .gradio-container {
     padding: 3px 5px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     border: 1px solid #E2E8F0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+/* Hover: โลโก้ลอยนูนขึ้น */
+.logo-box:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+    border-color: #38BDF8;
 }
 
 .logo-box img {
@@ -303,6 +314,7 @@ body, .gradio-container {
     object-fit: contain;
 }
 
+/* ================= Sidebar แผงควบคุม ================= */
 .sidebar-panel {
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(16px);
@@ -310,9 +322,14 @@ body, .gradio-container {
     padding: 16px !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.3s ease !important;
 }
 
-/* แผงปุ่มช่วงเวลา แถวแรก: 1 วัน | 1 เดือน | 1 ปี */
+.sidebar-panel:hover {
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ปุ่มเลือกช่วงเวลา */
 .time-radio-grid {
     background: transparent !important;
     border: none !important;
@@ -335,17 +352,22 @@ body, .gradio-container {
     align-items: center !important;
     cursor: pointer !important;
     min-height: 32px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* Hover: ปุ่มช่วงเวลาลอยนูนและเปลี่ยนสี */
 .time-radio-grid label:hover {
     background: #FFFFFF !important;
-    border-color: #94A3B8 !important;
+    border-color: #0284C7 !important;
+    transform: translateY(-3px) !important;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2) !important;
 }
 
 .time-radio-grid label.selected {
     background: #0284C7 !important;
     border-color: #0284C7 !important;
     color: #FFFFFF !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
 }
 
 .time-radio-grid label.selected span {
@@ -363,6 +385,7 @@ body, .gradio-container {
     display: none !important;
 }
 
+/* ================= Header ส่วนหัว ================= */
 .main-header {
     background: rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(16px);
@@ -374,6 +397,12 @@ body, .gradio-container {
     align-items: center;
     margin-bottom: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+}
+
+.main-header:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+    border-color: rgba(255, 255, 255, 0.95);
 }
 
 .title-text {
@@ -397,8 +426,16 @@ body, .gradio-container {
     font-size: 13px;
     color: #334155;
     font-weight: 500;
+    transition: all 0.25s ease;
 }
 
+.btn-profile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border-color: #94A3B8;
+}
+
+/* ================= Alert Banner ================= */
 .alert-banner {
     background: linear-gradient(90deg, #FF4B2B, #FF416C);
     color: #FFFFFF;
@@ -410,11 +447,21 @@ body, .gradio-container {
     align-items: center;
     gap: 8px;
     box-shadow: 0 4px 12px rgba(255, 75, 43, 0.25);
+    transition: all 0.3s ease;
+}
+
+.alert-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 75, 43, 0.4);
 }
 
 .alert-safe {
     background: linear-gradient(90deg, #10B981, #059669) !important;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+.alert-safe:hover {
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4) !important;
 }
 
 .section-title {
@@ -424,6 +471,7 @@ body, .gradio-container {
     margin-bottom: 10px;
 }
 
+/* ================= การ์ด EXECUTIVE KPIs (ไฮไลต์หลัก) ================= */
 .kpi-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -441,12 +489,28 @@ body, .gradio-container {
     align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.9);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+    /* แอนิเมชันเวลาขยับเมาส์เข้า-ออก */
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Hover: การ์ด KPI นูนลอยขึ้น เปลี่ยนสีขอบและเงา */
+.kpi-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12), 0 0 15px rgba(255, 255, 255, 0.6);
+    border-color: #FFFFFF;
 }
 
 .kpi-title {
     font-size: 13px;
     font-weight: 500;
     color: #64748B;
+    transition: color 0.2s ease;
+}
+
+.kpi-card:hover .kpi-title {
+    color: #334155;
 }
 
 .kpi-num {
@@ -471,12 +535,18 @@ body, .gradio-container {
     align-items: center;
     color: white;
     font-size: 20px;
+    transition: transform 0.3s ease;
+}
+
+.kpi-card:hover .kpi-badge {
+    transform: scale(1.12) rotate(4deg);
 }
 
 .badge-red { background: linear-gradient(135deg, #EF4444, #DC2626); }
 .badge-orange { background: linear-gradient(135deg, #F59E0B, #D97706); }
 .badge-darkred { background: linear-gradient(135deg, #DC2626, #991B1B); font-weight: bold; }
 
+/* ================= กล่องกราฟ & ตาราง (Glass Box) ================= */
 .glass-box {
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(14px);
@@ -485,6 +555,15 @@ body, .gradio-container {
     padding: 16px !important;
     margin-bottom: 14px !important;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Hover: กรอบกราฟและตารางลอยนูนขึ้นมา */
+.glass-box:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.88) !important;
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.95) !important;
 }
 
 .chart-subtitle {
@@ -495,12 +574,20 @@ body, .gradio-container {
     line-height: 1.4;
 }
 
+/* ================= ปุ่มกด ================= */
 .refresh-btn {
     background: #0284C7 !important;
     color: white !important;
     font-weight: 500 !important;
     border-radius: 8px !important;
     border: none !important;
+    transition: all 0.25s ease !important;
+}
+
+.refresh-btn:hover {
+    background: #0369A1 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
 }
 
 .export-btn {
@@ -510,6 +597,15 @@ body, .gradio-container {
     border-radius: 8px !important;
     margin-top: 6px !important;
     font-weight: 500 !important;
+    transition: all 0.25s ease !important;
+}
+
+.export-btn:hover {
+    background: #F8FAFC !important;
+    color: #0F172A !important;
+    border-color: #94A3B8 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06) !important;
 }
 
 .legend-box {
@@ -520,6 +616,12 @@ body, .gradio-container {
     color: #475569;
     border: 1px solid rgba(255, 255, 255, 0.9);
     line-height: 1.6;
+    transition: all 0.3s ease;
+}
+
+.legend-box:hover {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
 }
 
 .dataframe-centered table th,
@@ -528,7 +630,6 @@ body, .gradio-container {
     vertical-align: middle !important;
 }
 """
-
 region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุรีรัมย์", "32xxx สุรินทร์", "36xxx ชัยภูมิ", "45xxx ร้อยเอ็ด"]
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
 
