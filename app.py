@@ -1,6 +1,7 @@
 import gradio as gr
 import pandas as pd
 import plotly.graph_objects as go
+import spaces
 
 def load_real_data():
     try:
@@ -30,7 +31,7 @@ def get_risk_info(total):
     else: return ("🟢 ปกติ", "1.2 วัน", 3)
 
 df_base = load_real_data()
-
+@spaces.GPU
 def update_dashboard(selected_time_days, selected_region, selected_branch):
     df = load_real_data() if df_base.empty else df_base.copy()
     if df.empty:
@@ -113,4 +114,4 @@ with gr.Blocks(title="SLA Risk Dashboard ปข.3") as demo:
     demo.load(fn=update_dashboard, inputs=inputs, outputs=outputs)
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860, ssr=False)
