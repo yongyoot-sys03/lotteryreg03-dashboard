@@ -655,7 +655,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
     with gr.Row():
         # ========== แถบซ้าย: แผงควบคุม (SIDEBAR) ==========
         with gr.Column(scale=2, elem_classes=["sidebar-panel"]):
-            <!-- แผง 3 โลโก้แบบคลิกเปิดแท็บใหม่ได้ -->
+            
             gr.HTML("""
             <div class="top-logo-container">
                 <a href="http://10.253.23.3:84/" target="_blank" rel="noopener noreferrer" class="logo-box" title="สลากฯ x ปณท">
