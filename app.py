@@ -12,7 +12,6 @@ REGION_MAP = {
     "ชัยภูมิ": "36xxx ชัยภูมิ",
     "ร้อยเอ็ด": "45xxx ร้อยเอ็ด"
 }
-REVERSE_REGION_MAP = {v: k for k, v in REGION_MAP.items()}
 
 def load_real_data():
     try:
@@ -36,7 +35,7 @@ def load_real_data():
         df['Raw_Branch'] = df['Raw_Branch'].astype(str).str.strip()
         df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch']
         
-        # ปรับชื่อกลุ่ม ปจ. ให้แสดงรหัสนำหน้า เช่น 30xxx นครราชสีมา
+        # ปรับชื่อกลุ่ม ปจ. ให้มีรหัสนำหน้า เช่น 30xxx นครราชสีมา
         df['Region_Display'] = df['Region'].astype(str).str.strip().map(lambda x: REGION_MAP.get(x, x))
         
         df['P'] = pd.to_numeric(df['P'], errors='coerce').fillna(0)
@@ -60,7 +59,6 @@ def get_risk_info(total):
 
 df_base = load_real_data()
 
-# อัปเดต Dropdown สาขาตามกลุ่ม ปจ.
 def sync_branch_options(selected_region_display):
     df = load_real_data() if df_base.empty else df_base.copy()
     if df.empty or selected_region_display == "ALL":
@@ -77,20 +75,18 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         return "", "", "", None, None, pd.DataFrame()
 
     max_date = df['Date_parsed'].max()
-    # คำนวณช่วงเวลาของกราฟเส้นตามที่ผู้ใช้เลือกจริง
+    
+    # กำหนด filtered_df ตามช่วงเวลาที่เลือก
     if selected_time_days == 1:
-        # หากเลือก "1 วัน" ให้ดึงข้อมูลย้อนหลัง 2 วัน เพื่อให้มีเส้นลากเปรียบเทียบกับวันก่อนหน้า
-        trend_cutoff = max_date - pd.Timedelta(days=1)
+        filtered_df = df[df['Date_parsed'] == max_date].copy()
     else:
-        trend_cutoff = max_date - pd.Timedelta(days=selected_time_days)
+        cutoff = max_date - pd.Timedelta(days=selected_time_days)
+        filtered_df = df[df['Date_parsed'] >= cutoff].copy()
 
-    trend_df = df.copy()
     if selected_region_display != "ALL":
-        trend_df = trend_df[trend_df['Region_Display'] == selected_region_display]
+        filtered_df = filtered_df[filtered_df['Region_Display'] == selected_region_display]
     if selected_branch != "ALL":
-        trend_df = trend_df[trend_df['Branch'] == selected_branch]
-
-    daily_trend = trend_df[trend_df['Date_parsed'] >= trend_cutoff].groupby('Date_parsed')[['P', 'S']].sum().reset_index().sort_values('Date_parsed')
+        filtered_df = filtered_df[filtered_df['Branch'] == selected_branch]
 
     latest_df = filtered_df.groupby(['Region_Display', 'Branch'])[['P', 'S', 'Total']].sum().reset_index()
     risk_info = latest_df['Total'].apply(get_risk_info).tolist()
@@ -110,7 +106,7 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
     total_s = int(latest_df['S'].sum()) if not latest_df.empty else 0
     risk_branches = len(latest_df[latest_df['Risk Code'] == 1])
 
-    # 1. Alert Banner
+    # 1. แบนเนอร์แจ้งเตือน AI Alert
     top_crit = latest_df[latest_df['Risk Code'] == 1]
     if not top_crit.empty:
         crit_branch = top_crit.iloc[0]['Branch']
@@ -158,8 +154,12 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
     </div>
     """
 
-    # 3. Line Chart
-    trend_cutoff = max_date - pd.Timedelta(days=max(selected_time_days, 15))
+    # 3. Line Chart ปรับช่วงเวลาตามที่เลือกจริง
+    if selected_time_days == 1:
+        trend_cutoff = max_date - pd.Timedelta(days=2)
+    else:
+        trend_cutoff = max_date - pd.Timedelta(days=selected_time_days)
+
     trend_df = df.copy()
     if selected_region_display != "ALL":
         trend_df = trend_df[trend_df['Region_Display'] == selected_region_display]
@@ -188,7 +188,7 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
             marker=dict(size=6, color='#F59E0B')
         ))
 
-        # เส้นประต่อจากวันปัจจุบัน
+        # เส้นประคาดการณ์ต่อจากวันล่าสุด
         if len(daily_trend) >= 2:
             last_date = daily_trend['Date_parsed'].iloc[-1]
             future_dates = [last_date + pd.Timedelta(days=i) for i in range(1, 4)]
@@ -312,7 +312,7 @@ body, .gradio-container {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* แผงปุ่มช่วงเวลา 3 คอลัมน์ แถวบน: 1 วัน | 1 เดือน | 1 ปี */
+/* แผงปุ่มช่วงเวลา แถวแรก: 1 วัน | 1 เดือน | 1 ปี */
 .time-radio-grid {
     background: transparent !important;
     border: none !important;
@@ -529,19 +529,11 @@ body, .gradio-container {
 }
 """
 
-# รายการกลุ่ม ปจ. ที่กำหนดไว้
 region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุรีรัมย์", "32xxx สุรินทร์", "36xxx ชัยภูมิ", "45xxx ร้อยเอ็ด"]
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
 
-# จัดเรียง 3 คอลัมน์: แถวที่ 1 จะได้ [1 วัน] [1 เดือน] [1 ปี] ตรงกันพอดี
+# แถวที่ 1 ได้ [1 วัน] [1 เดือน] [1 ปี]
 time_choices = [
-    ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
-    ("3 วัน", 3), ("3 เดือน", 90), ("", 365),       # ช่องว่างรักษาโครงสร้าง 3 คอลัมน์
-    ("7 วัน", 7), ("6 เดือน", 180), ("", 365),
-    ("15 วัน", 15), ("", 365), ("", 365)
-]
-# กรองเอาเฉพาะปุ่มที่มีข้อความจริง
-clean_time_choices = [
     ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
     ("3 วัน", 3), ("3 เดือน", 90),
     ("7 วัน", 7), ("6 เดือน", 180),
@@ -571,9 +563,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             
             time_filter = gr.Radio(
                 choices=time_choices,
-                value=7,
-                label="",
-                show_label=False,
+                value=7, label="", show_label=False,
                 elem_classes=["time-radio-grid"]
             )
             
