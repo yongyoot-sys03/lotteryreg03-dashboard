@@ -9,30 +9,29 @@ def load_real_data():
         url = "https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029"
         df = pd.read_csv(url)
         
-        # แมปคอลัมน์จาก Sheet
-        # คอลัมน์ 1: Zipcode/รหัสไปรษณีย์, 2: Date, 3: Region, 5: Branch, 6: P, 7: S
-        col_zip = df.columns[1] if len(df.columns) > 1 else None
-        col_date = df.columns[2]
-        col_region = df.columns[3]
-        col_branch = df.columns[5]
-        col_p = df.columns[6]
-        col_s = df.columns[7]
+        # อ้างอิง index คอลัมน์ตาม Google Sheet จริง
+        col_date = df.columns[2]     # C: วันที่สุ่มตรวจ
+        col_region = df.columns[3]   # D: กลุ่ม ปจ.
+        col_zip = df.columns[4]      # E: รหัสไปรษณีย์
+        col_branch = df.columns[5]   # F: ที่ทำการ (งานจ่ายสลาก)
+        col_p = df.columns[6]        # G: ค้าง P
+        col_s = df.columns[7]        # H: ค้าง S/K/L
 
         df = df.rename(columns={
-            col_date: 'Date', col_region: 'Region', 
-            col_branch: 'Raw_Branch', col_p: 'P', col_s: 'S'
+            col_date: 'Date', col_region: 'Region',
+            col_zip: 'Zipcode', col_branch: 'Raw_Branch',
+            col_p: 'P', col_s: 'S'
         })
-        if col_zip:
-            df = df.rename(columns={col_zip: 'Zipcode'})
-            df['Zipcode'] = df['Zipcode'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-            df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch'].astype(str).str.strip()
-        else:
-            df['Branch'] = df['Raw_Branch'].astype(str).str.strip()
-
+        
+        # จัดรูปแบบ รหัสไปรษณีย์ + ชื่อที่ทำการ เช่น 31110 นางรอง
+        df['Zipcode'] = df['Zipcode'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+        df['Raw_Branch'] = df['Raw_Branch'].astype(str).str.strip()
+        df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch']
+        
         df['P'] = pd.to_numeric(df['P'], errors='coerce').fillna(0)
         df['S'] = pd.to_numeric(df['S'], errors='coerce').fillna(0)
         df['Total'] = df['P'] + df['S']
-        df = df[df['Raw_Branch'].notna() & (df['Raw_Branch'] != '')]
+        df = df[df['Raw_Branch'].notna() & (df['Raw_Branch'] != '') & (df['Raw_Branch'] != 'nan')]
         
         df['Date'] = df['Date'].astype(str).str.strip()
         df['Date_parsed'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
@@ -143,7 +142,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     </div>
     """
 
-    # 3. Line Chart พร้อมเส้นประแนวโน้มประมาณการ (Trendline Projection)
+    # 3. Line Chart พร้อมเส้นประแนวโน้มต่อจากวันปัจจุบันทั้ง 2 สี
     trend_cutoff = max_date - pd.Timedelta(days=max(selected_time_days, 15))
     trend_df = df.copy()
     if selected_region != "ALL":
@@ -151,38 +150,54 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     if selected_branch != "ALL":
         trend_df = trend_df[trend_df['Branch'] == selected_branch]
 
-    daily_trend = trend_df[trend_df['Date_parsed'] >= trend_cutoff].groupby('Date_parsed')[['P', 'S', 'Total']].sum().reset_index().sort_values('Date_parsed')
+    daily_trend = trend_df[trend_df['Date_parsed'] >= trend_cutoff].groupby('Date_parsed')[['P', 'S']].sum().reset_index().sort_values('Date_parsed')
     fig_line = go.Figure()
     
     if not daily_trend.empty:
-        date_labels = daily_trend['Date_parsed'].dt.strftime('%d/%m')
-        
-        # เส้นจริงค้าง P
+        date_str_list = daily_trend['Date_parsed'].dt.strftime('%d/%m').tolist()
+        p_list = daily_trend['P'].tolist()
+        s_list = daily_trend['S'].tolist()
+
+        # เส้นจริงค้าง P (แดง)
         fig_line.add_trace(go.Scatter(
-            x=date_labels, y=daily_trend['P'],
+            x=date_str_list, y=p_list,
             mode='lines+markers', name='ค้าง P',
             line=dict(color='#EF4444', width=2.5),
             marker=dict(size=6, color='#EF4444')
         ))
-        # เส้นจริงค้าง S/K/L
+        
+        # เส้นจริงค้าง S/K/L (ส้ม)
         fig_line.add_trace(go.Scatter(
-            x=date_labels, y=daily_trend['S'],
+            x=date_str_list, y=s_list,
             mode='lines+markers', name='ค้าง S/K/L (รับแล้ว/ส่งคืน)',
             line=dict(color='#F59E0B', width=2.5),
             marker=dict(size=6, color='#F59E0B')
         ))
-        
-        # เส้นประบอกแนวโน้มประมาณการยอดรวม (Linear Trendline Projection)
+
+        # สร้างเส้นประประมาณการ (Projection) ต่อจากจุดสุดท้ายไปข้างหน้า 3 งวด/วัน
         if len(daily_trend) >= 2:
-            x_vals = np.arange(len(daily_trend))
-            y_vals = daily_trend['Total'].values
-            slope, intercept = np.polyfit(x_vals, y_vals, 1)
-            trend_y = [max(0, slope * x + intercept) for x in x_vals]
+            last_date = daily_trend['Date_parsed'].iloc[-1]
+            future_dates = [last_date + pd.Timedelta(days=i) for i in range(1, 4)]
+            proj_dates_str = [date_str_list[-1]] + [d.strftime('%d/%m') for d in future_dates]
+
+            x_numeric = np.arange(len(daily_trend))
             
+            # คำนวณแนวโน้ม ค้าง P (เส้นประสีแดง)
+            slope_p, intercept_p = np.polyfit(x_numeric, p_list, 1)
+            future_p = [p_list[-1]] + [max(0, slope_p * (len(daily_trend) - 1 + i) + intercept_p) for i in range(1, 4)]
             fig_line.add_trace(go.Scatter(
-                x=date_labels, y=trend_y,
-                mode='lines', name='- - - เส้นประแนวโน้มประมาณการ',
-                line=dict(color='#64748B', width=2, dash='dash')
+                x=proj_dates_str, y=future_p,
+                mode='lines', name='- - - คาดการณ์ ค้าง P',
+                line=dict(color='#EF4444', width=2, dash='dash')
+            ))
+
+            # คำนวณแนวโน้ม ค้าง S (เส้นประสีส้ม)
+            slope_s, intercept_s = np.polyfit(x_numeric, s_list, 1)
+            future_s = [s_list[-1]] + [max(0, slope_s * (len(daily_trend) - 1 + i) + intercept_s) for i in range(1, 4)]
+            fig_line.add_trace(go.Scatter(
+                x=proj_dates_str, y=future_s,
+                mode='lines', name='- - - คาดการณ์ ค้าง S/K/L',
+                line=dict(color='#F59E0B', width=2, dash='dash')
             ))
 
     fig_line.update_layout(
@@ -196,7 +211,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         height=270
     )
 
-    # 4. Bar Chart Top 5 (ดึงสาขารหัส+ชื่อ ตรงกับตาราง)
+    # 4. Bar Chart Top 5
     top5_plot = latest_df.head(5).iloc[::-1]
     fig_bar = go.Figure()
     if not top5_plot.empty:
@@ -222,7 +237,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         template="plotly_white",
         paper_bgcolor='rgba(255,255,255,0.7)',
         plot_bgcolor='rgba(255,255,255,0.5)',
-        margin=dict(l=90, r=15, t=25, b=25),
+        margin=dict(l=110, r=15, t=25, b=25),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, family="Kanit")),
         xaxis=dict(showgrid=True, gridcolor='#E2E8F0', rangemode='tozero', tickfont=dict(size=10, family="Kanit")),
         yaxis=dict(type='category', showgrid=False, tickfont=dict(size=11, family="Kanit")),
@@ -234,7 +249,6 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     )
     return banner_html, kpi_header_html, kpi_cards_html, fig_line, fig_bar, grid_df
 
-# CSS สไตล์ Glassmorphism พร้อมการจัดภาพโลโก้ตรงกลาง
 custom_css = """
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
@@ -247,7 +261,6 @@ body, .gradio-container {
     min-height: 100vh;
 }
 
-/* แผง 3 โลโก้จริง จัดกึ่งกลาง ขยายใหญ่เต็มที่ */
 .top-logo-container {
     display: flex;
     justify-content: center;
@@ -279,7 +292,6 @@ body, .gradio-container {
     object-fit: contain;
 }
 
-/* Sidebar แผงควบคุม */
 .sidebar-panel {
     background: rgba(255, 255, 255, 0.75) !important;
     backdrop-filter: blur(16px);
@@ -446,6 +458,13 @@ body, .gradio-container {
     border: 1px solid rgba(255, 255, 255, 0.9);
     line-height: 1.6;
 }
+
+/* จัดข้อมูลและหัวตารางกึ่งกลางทั้งหมด */
+.dataframe-centered table th,
+.dataframe-centered table td {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
 """
 
 region_list = ["ALL"] + (sorted(df_base['Region'].dropna().unique().tolist()) if not df_base.empty else [])
@@ -456,8 +475,6 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
     with gr.Row():
         # ========== แถบซ้าย: แผงควบคุม (SIDEBAR) ==========
         with gr.Column(scale=2, elem_classes=["sidebar-panel"]):
-            
-            # โลโก้ 3 รูปจริง ขยายใหญ่และจัดกึ่งกลาง
             gr.HTML("""
             <div class="top-logo-container">
                 <div class="logo-box">
@@ -528,7 +545,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
 
             with gr.Column(elem_classes=["glass-box"]):
                 gr.HTML("""<div class="section-title">📋 ML INSIGHTS DATA GRID (ตารางข้อมูลการให้บริการ)</div>""")
-                table_grid = gr.Dataframe(interactive=False)
+                table_grid = gr.Dataframe(interactive=False, elem_classes=["dataframe-centered"])
 
             gr.HTML("""
             <div class="legend-box">
@@ -542,10 +559,8 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
     inputs = [time_filter, region_filter, branch_filter, risk_crit, risk_wat, risk_norm]
     outputs = [alert_banner, kpi_header, kpi_cards, chart_line, chart_bar, table_grid]
 
-    # การผูก Event อัปเดต Dropdown สาขาตามกลุ่ม ปจ.
     region_filter.change(fn=sync_branch_options, inputs=[region_filter], outputs=[branch_filter])
 
-    # Event อัปเดตหน้า Dashboard
     refresh_btn.click(fn=update_dashboard, inputs=inputs, outputs=outputs)
     time_filter.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
     region_filter.change(fn=update_dashboard, inputs=inputs, outputs=outputs)
