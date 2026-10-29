@@ -53,7 +53,7 @@ def load_real_data():
         return pd.DataFrame()
 
 def get_risk_info(total):
-    if total >= 100: return ("🔴 วิกฤต", "3.5 วัน", "🔴 95% (วิกฤต)", 1)
+    if total >= 100: return ("🔴 สุ่มเสี่ยง", "3.5 วัน", "🔴 95% (สุ่มเสี่ยง)", 1)
     elif total >= 30: return ("🟡 เฝ้าระวัง", "2.1 วัน", "🟡 65% (เฝ้าระวัง)", 2)
     else: return ("🟢 ปกติ", "1.2 วัน", "🟢 15% (ปกติ)", 3)
 
@@ -113,7 +113,7 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         banner_html = f"""
         <div class="alert-banner">
             <span style="font-size:15px; font-weight:700;">🚨 AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🔴 วิกฤต: ประเมินพบ 'ที่ทำการ {crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
+            <span>[ 🔴 สุ่มเสี่ยง: ประเมินพบ 'ที่ทำการ {crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
         </div>
         """
     else:
@@ -686,7 +686,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             
             gr.HTML("""<div style="font-size:12px; font-weight:600; color:#475569; margin-top:10px;">[ ⚠️ ระดับความเสี่ยง ]</div>""")
             with gr.Column():
-                risk_crit = gr.Checkbox(value=True, label="🔴 วิกฤต")
+                risk_crit = gr.Checkbox(value=True, label="🔴 สุ่มเสี่ยง")
                 risk_wat = gr.Checkbox(value=True, label="🟡 เฝ้าระวัง")
                 risk_norm = gr.Checkbox(value=True, label="🟢 ปกติ")
                 
@@ -733,7 +733,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             <div class="legend-box">
                 <b>ℹ️ คำอธิบายเกณฑ์การประเมิน SLA (Rule-based & ML Logic):</b><br>
                 • <b>ค้าง P:</b> สถานะ 'รอจ่าย ณ ที่ทำการ' | <b>ค้าง S/K/L:</b> สถานะ 'ผู้รับได้รับเรียบร้อย/รอส่งคืน/ส่งต่อ' (ระบุตามสถานะระบบ ปณท.)<br>
-                • <span style="color:#DC2626;">🔴 วิกฤต:</span> ยอดค้างสะสม ≥ 100 ชิ้น หรือ ประมาณการตกค้างสะสมเกิน 3 วัน หรือ ประเมินมีความเสี่ยงตกเกณฑ์มาตรฐานอย่างยิ่ง<br>
+                • <span style="color:#DC2626;">🔴 สุ่มเสี่ยง:</span> ยอดค้างสะสม ≥ 100 ชิ้น หรือ ประมาณการตกค้างสะสมเกิน 3 วัน หรือ ประเมินมีความเสี่ยงตกเกณฑ์มาตรฐานอย่างยิ่ง<br>
                 • <span style="color:#D97706;">🟡 เฝ้าระวัง:</span> ยอดสะสม 30-99 ชิ้น หรือ คาดการณ์ตกค้าง 2-3 วัน หรือ มีแนวโน้มการนำจ่ายช้ากว่ากรอบเวลา
             </div>
             """)
