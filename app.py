@@ -114,4 +114,4 @@ with gr.Blocks(title="SLA Risk Dashboard ปข.3") as demo:
     demo.load(fn=update_dashboard, inputs=inputs, outputs=outputs)
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, ssr=False)
+    demo.launch(server_name="0.0.0.0", server_port=7860)
