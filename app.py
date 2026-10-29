@@ -308,7 +308,13 @@ body, .gradio-container {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* ปรับแต่งปุ่มเลือกช่วงเวลา 3 คอลัมน์แนวตั้ง (วัน / เดือน / ปี) */
+/* ปรับแต่งแผงปุ่มช่วงเวลา 3 คอลัมน์แนวตั้ง */
+.time-radio-grid {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
 .time-radio-grid .wrap {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
@@ -316,14 +322,47 @@ body, .gradio-container {
 }
 
 .time-radio-grid label {
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(255, 255, 255, 0.85) !important;
     border: 1px solid #CBD5E1 !important;
     border-radius: 8px !important;
-    padding: 6px 4px !important;
-    text-align: center !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
+    padding: 6px 2px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
     cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+}
+
+.time-radio-grid label:hover {
+    background: #FFFFFF !important;
+    border-color: #94A3B8 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* เมื่อถูกเลือก */
+.time-radio-grid label.selected {
+    background: #0284C7 !important;
+    border-color: #0284C7 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3) !important;
+}
+
+.time-radio-grid label.selected span {
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+}
+
+.time-radio-grid span {
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+    margin: 0 !important;
+}
+
+/* ซ่อนปุ่มจุดกลม Radio ดั้งเดิม */
+.time-radio-grid input[type="radio"] {
+    display: none !important;
 }
 
 .main-header {
@@ -496,17 +535,19 @@ body, .gradio-container {
 region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุรีรัมย์", "32xxx สุรินทร์", "36xxx ชัยภูมิ", "45xxx ร้อยเอ็ด"]
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
 
-# จัดเรียงตัวเลือก 3 คอลัมน์แนวตั้ง: วัน / เดือน / ปี
+# จัดลำดับตัวเลือกให้อ่านไหลลงตาม 3 คอลัมน์แนวตั้ง: วัน (คอลัมน์ 1) | เดือน (คอลัมน์ 2) | ปี (คอลัมน์ 3)
 time_choices = [
     ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
-    ("3 วัน", 3), ("3 เดือน", 90), ("", 365),       # แถว 2
-    ("7 วัน", 7), ("6 เดือน", 180), ("", 365)       # แถว 3
+    ("3 วัน", 3), ("3 เดือน", 90),
+    ("7 วัน", 7), ("6 เดือน", 180),
+    ("15 วัน", 15)
 ]
 # กรองตัวเลือกจริงสำหรับ Radio
 clean_time_choices = [
     ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
     ("3 วัน", 3), ("3 เดือน", 90),
-    ("7 วัน", 7), ("6 เดือน", 180)
+    ("7 วัน", 7), ("6 เดือน", 180),
+    ("15 วัน", 15)
 ]
 
 with gr.Blocks(title="ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล", css=custom_css) as demo:
@@ -531,8 +572,10 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             """)
             
             time_filter = gr.Radio(
-                choices=clean_time_choices,
-                value=7, label="", show_label=False,
+                choices=time_choices,
+                value=7,
+                label="",
+                show_label=False,
                 elem_classes=["time-radio-grid"]
             )
             
