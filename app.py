@@ -312,6 +312,7 @@ body, .gradio-container {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    pointer-events: none; /* ส่งผ่านการคลิกไปยังลิงก์ <a> */
 }
 
 /* ================= Sidebar แผงควบคุม ================= */
