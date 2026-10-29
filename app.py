@@ -4,12 +4,21 @@ import numpy as np
 import plotly.graph_objects as go
 import spaces
 
+# แผนผังกลุ่ม ปจ.
+REGION_MAP = {
+    "นครราชสีมา": "30xxx นครราชสีมา",
+    "บุรีรัมย์": "31xxx บุรีรัมย์",
+    "สุรินทร์": "32xxx สุรินทร์",
+    "ชัยภูมิ": "36xxx ชัยภูมิ",
+    "ร้อยเอ็ด": "45xxx ร้อยเอ็ด"
+}
+REVERSE_REGION_MAP = {v: k for k, v in REGION_MAP.items()}
+
 def load_real_data():
     try:
         url = "https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029"
         df = pd.read_csv(url)
         
-        # อ้างอิง index คอลัมน์ตาม Google Sheet จริง
         col_date = df.columns[2]     # C: วันที่สุ่มตรวจ
         col_region = df.columns[3]   # D: กลุ่ม ปจ.
         col_zip = df.columns[4]      # E: รหัสไปรษณีย์
@@ -23,10 +32,12 @@ def load_real_data():
             col_p: 'P', col_s: 'S'
         })
         
-        # จัดรูปแบบ รหัสไปรษณีย์ + ชื่อที่ทำการ เช่น 31110 นางรอง
         df['Zipcode'] = df['Zipcode'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
         df['Raw_Branch'] = df['Raw_Branch'].astype(str).str.strip()
         df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch']
+        
+        # ปรับชื่อกลุ่ม ปจ. ให้แสดงรหัสนำหน้า เช่น 30xxx นครราชสีมา
+        df['Region_Display'] = df['Region'].astype(str).str.strip().map(lambda x: REGION_MAP.get(x, x))
         
         df['P'] = pd.to_numeric(df['P'], errors='coerce').fillna(0)
         df['S'] = pd.to_numeric(df['S'], errors='coerce').fillna(0)
@@ -49,17 +60,18 @@ def get_risk_info(total):
 
 df_base = load_real_data()
 
-def sync_branch_options(selected_region):
+# อัปเดต Dropdown สาขาตามกลุ่ม ปจ.
+def sync_branch_options(selected_region_display):
     df = load_real_data() if df_base.empty else df_base.copy()
-    if df.empty or selected_region == "ALL":
+    if df.empty or selected_region_display == "ALL":
         branches = ["ALL"] + sorted(df['Branch'].dropna().unique().tolist())
     else:
-        filtered = df[df['Region'] == selected_region]
+        filtered = df[df['Region_Display'] == selected_region_display]
         branches = ["ALL"] + sorted(filtered['Branch'].dropna().unique().tolist())
     return gr.update(choices=branches, value="ALL")
 
 @spaces.GPU
-def update_dashboard(selected_time_days, selected_region, selected_branch, risk_critical, risk_watch, risk_normal):
+def update_dashboard(selected_time_days, selected_region_display, selected_branch, risk_critical, risk_watch, risk_normal):
     df = load_real_data() if df_base.empty else df_base.copy()
     if df.empty:
         return "", "", "", None, None, pd.DataFrame()
@@ -71,12 +83,12 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         cutoff = max_date - pd.Timedelta(days=selected_time_days)
         filtered_df = df[df['Date_parsed'] >= cutoff]
 
-    if selected_region != "ALL":
-        filtered_df = filtered_df[filtered_df['Region'] == selected_region]
+    if selected_region_display != "ALL":
+        filtered_df = filtered_df[filtered_df['Region_Display'] == selected_region_display]
     if selected_branch != "ALL":
         filtered_df = filtered_df[filtered_df['Branch'] == selected_branch]
 
-    latest_df = filtered_df.groupby(['Region', 'Branch'])[['P', 'S', 'Total']].sum().reset_index()
+    latest_df = filtered_df.groupby(['Region_Display', 'Branch'])[['P', 'S', 'Total']].sum().reset_index()
     risk_info = latest_df['Total'].apply(get_risk_info).tolist()
     latest_df['⚠️ SLA Risk'] = [r[0] for r in risk_info]
     latest_df['⏱️ ประเมินวันค้าง'] = [r[1] for r in risk_info]
@@ -94,7 +106,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     total_s = int(latest_df['S'].sum()) if not latest_df.empty else 0
     risk_branches = len(latest_df[latest_df['Risk Code'] == 1])
 
-    # 1. แบนเนอร์แจ้งเตือน AI Alert
+    # 1. Alert Banner
     top_crit = latest_df[latest_df['Risk Code'] == 1]
     if not top_crit.empty:
         crit_branch = top_crit.iloc[0]['Branch']
@@ -112,7 +124,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         </div>
         """
 
-    level_name = f"{selected_branch}" if selected_branch != "ALL" else (f"กลุ่ม ปจ.{selected_region}" if selected_region != "ALL" else "ภาพรวม ปข.3")
+    level_name = f"{selected_branch}" if selected_branch != "ALL" else (f"{selected_region_display}" if selected_region_display != "ALL" else "ภาพรวม ปข.3")
     kpi_header_html = f"""<div class="section-title">📊 EXECUTIVE KPIs (ข้อมูลระดับ: {level_name})</div>"""
 
     # 2. Executive KPI Cards
@@ -134,7 +146,7 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         </div>
         <div class="kpi-card">
             <div>
-                <div class="kpi-title">🚨 สาขาตกเกณฑ์ SLA</div>
+                <div class="kpi-title">🚨 สุ่มเสี่ยงตกเกณฑ์ SLA</div>
                 <div class="kpi-num">{risk_branches} <span class="kpi-unit">สาขา</span></div>
             </div>
             <div class="kpi-badge badge-darkred">▲</div>
@@ -142,11 +154,11 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
     </div>
     """
 
-    # 3. Line Chart พร้อมเส้นประแนวโน้มต่อจากวันปัจจุบันทั้ง 2 สี
+    # 3. Line Chart
     trend_cutoff = max_date - pd.Timedelta(days=max(selected_time_days, 15))
     trend_df = df.copy()
-    if selected_region != "ALL":
-        trend_df = trend_df[trend_df['Region'] == selected_region]
+    if selected_region_display != "ALL":
+        trend_df = trend_df[trend_df['Region_Display'] == selected_region_display]
     if selected_branch != "ALL":
         trend_df = trend_df[trend_df['Branch'] == selected_branch]
 
@@ -158,15 +170,13 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
         p_list = daily_trend['P'].tolist()
         s_list = daily_trend['S'].tolist()
 
-        # เส้นจริงค้าง P (แดง)
         fig_line.add_trace(go.Scatter(
             x=date_str_list, y=p_list,
-            mode='lines+markers', name='ค้าง P',
+            mode='lines+markers', name='ค้าง P (รอจ่าย)',
             line=dict(color='#EF4444', width=2.5),
             marker=dict(size=6, color='#EF4444')
         ))
         
-        # เส้นจริงค้าง S/K/L (ส้ม)
         fig_line.add_trace(go.Scatter(
             x=date_str_list, y=s_list,
             mode='lines+markers', name='ค้าง S/K/L (รับแล้ว/ส่งคืน)',
@@ -174,15 +184,13 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
             marker=dict(size=6, color='#F59E0B')
         ))
 
-        # สร้างเส้นประประมาณการ (Projection) ต่อจากจุดสุดท้ายไปข้างหน้า 3 งวด/วัน
+        # เส้นประต่อจากวันปัจจุบัน
         if len(daily_trend) >= 2:
             last_date = daily_trend['Date_parsed'].iloc[-1]
             future_dates = [last_date + pd.Timedelta(days=i) for i in range(1, 4)]
             proj_dates_str = [date_str_list[-1]] + [d.strftime('%d/%m') for d in future_dates]
-
             x_numeric = np.arange(len(daily_trend))
             
-            # คำนวณแนวโน้ม ค้าง P (เส้นประสีแดง)
             slope_p, intercept_p = np.polyfit(x_numeric, p_list, 1)
             future_p = [p_list[-1]] + [max(0, slope_p * (len(daily_trend) - 1 + i) + intercept_p) for i in range(1, 4)]
             fig_line.add_trace(go.Scatter(
@@ -191,7 +199,6 @@ def update_dashboard(selected_time_days, selected_region, selected_branch, risk_
                 line=dict(color='#EF4444', width=2, dash='dash')
             ))
 
-            # คำนวณแนวโน้ม ค้าง S (เส้นประสีส้ม)
             slope_s, intercept_s = np.polyfit(x_numeric, s_list, 1)
             future_s = [s_list[-1]] + [max(0, slope_s * (len(daily_trend) - 1 + i) + intercept_s) for i in range(1, 4)]
             fig_line.add_trace(go.Scatter(
@@ -265,24 +272,24 @@ body, .gradio-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding: 8px;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 6px;
     background: rgba(255, 255, 255, 0.5);
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .logo-box {
     flex: 1;
-    height: 56px;
+    height: 52px;
     background: #FFFFFF;
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 4px 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    padding: 3px 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
     border: 1px solid #E2E8F0;
 }
 
@@ -299,6 +306,24 @@ body, .gradio-container {
     padding: 16px !important;
     border: 1px solid rgba(255, 255, 255, 0.8) !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ปรับแต่งปุ่มเลือกช่วงเวลา 3 คอลัมน์แนวตั้ง (วัน / เดือน / ปี) */
+.time-radio-grid .wrap {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+}
+
+.time-radio-grid label {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    padding: 6px 4px !important;
+    text-align: center !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
 }
 
 .main-header {
@@ -324,7 +349,7 @@ body, .gradio-container {
 .sub-text {
     font-size: 13px;
     color: #64748B;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .btn-profile {
@@ -430,6 +455,7 @@ body, .gradio-container {
     color: #64748B;
     margin-top: -6px;
     margin-bottom: 8px;
+    line-height: 1.4;
 }
 
 .refresh-btn {
@@ -459,7 +485,6 @@ body, .gradio-container {
     line-height: 1.6;
 }
 
-/* จัดข้อมูลและหัวตารางกึ่งกลางทั้งหมด */
 .dataframe-centered table th,
 .dataframe-centered table td {
     text-align: center !important;
@@ -467,8 +492,22 @@ body, .gradio-container {
 }
 """
 
-region_list = ["ALL"] + (sorted(df_base['Region'].dropna().unique().tolist()) if not df_base.empty else [])
+# รายการกลุ่ม ปจ. ที่กำหนดไว้
+region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุรีรัมย์", "32xxx สุรินทร์", "36xxx ชัยภูมิ", "45xxx ร้อยเอ็ด"]
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
+
+# จัดเรียงตัวเลือก 3 คอลัมน์แนวตั้ง: วัน / เดือน / ปี
+time_choices = [
+    ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
+    ("3 วัน", 3), ("3 เดือน", 90), ("", 365),       # แถว 2
+    ("7 วัน", 7), ("6 เดือน", 180), ("", 365)       # แถว 3
+]
+# กรองตัวเลือกจริงสำหรับ Radio
+clean_time_choices = [
+    ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
+    ("3 วัน", 3), ("3 เดือน", 90),
+    ("7 วัน", 7), ("6 เดือน", 180)
+]
 
 with gr.Blocks(title="ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล", css=custom_css) as demo:
     
@@ -492,12 +531,13 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             """)
             
             time_filter = gr.Radio(
-                choices=[("วันนี้", 1), ("3 วัน", 3), ("7 วัน", 7), ("15 วัน", 15), ("1 เดือน", 30), ("3 เดือน", 90), ("6 เดือน", 180), ("1 ปี", 365)],
-                value=7, label="", show_label=False
+                choices=clean_time_choices,
+                value=7, label="", show_label=False,
+                elem_classes=["time-radio-grid"]
             )
             
             gr.HTML("""<div style="font-size:12px; font-weight:600; color:#475569; margin-top:10px;">[ 🏢 เลือกกลุ่ม ปจ. ]</div>""")
-            region_filter = gr.Dropdown(choices=region_list, value="ALL", label="", show_label=False)
+            region_filter = gr.Dropdown(choices=region_choices, value="ALL", label="", show_label=False)
             
             gr.HTML("""<div style="font-size:12px; font-weight:600; color:#475569; margin-top:10px;">[ 📍 ชื่อที่ทำการ ]</div>""")
             branch_filter = gr.Dropdown(choices=branch_list, value="ALL", label="", show_label=False)
@@ -516,8 +556,8 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             gr.HTML("""
             <div class="main-header">
                 <div>
-                    <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล</div>
-                    <div class="sub-text">🏢 หน่วยงานรับผิดชอบ: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
+                    <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
+                    <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
                 </div>
                 <div class="btn-profile">👤 Executive Profile</div>
             </div>
@@ -533,13 +573,13 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                     with gr.Column():
                         gr.HTML("""
                         <div style="font-size:13px; font-weight:600; color:#1E293B;">[ 📈 แนวโน้มการค้าง P vs S/K/L ]</div>
-                        <div class="chart-subtitle">(เทียบเส้นเวลาใกล้วันที่ 5 และ 20 ของเดือน เพื่อดูความสามารถในการระบายสลากฯ)</div>
+                        <div class="chart-subtitle">(เทียบเส้นเวลาใกล้วันที่ 5 และ 20 ของเดือน (กำหนดจ่ายสลากจองฯ) : บันทึกสถานะ S และกำหนดวันส่งคืนสลากฯ วันที่ 12 และ 27 ของเดือน : บันทึกสถานะ K/L )</div>
                         """)
                         chart_line = gr.Plot()
                     with gr.Column():
                         gr.HTML("""
                         <div style="font-size:13px; font-weight:600; color:#1E293B;">[ 📊 Top 5 สาขาเสี่ยงสูง ]</div>
-                        <div class="chart-subtitle">(แสดงสาขาที่มียอดค้างสะสมสูงสุด เพื่อวางแผนสนับสนุนกำลังพลนำจ่าย)</div>
+                        <div class="chart-subtitle">(จำแนกสถานะ: ค้าง P (รอจ่าย ณ ที่ทำการ) -สีแดง | ค้าง S/K/L (ผู้รับได้รับเรียบร้อย/ส่งคืนต้นทาง) -สีส้ม)</div>
                         """)
                         chart_bar = gr.Plot()
 
