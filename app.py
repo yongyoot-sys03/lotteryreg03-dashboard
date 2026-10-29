@@ -664,7 +664,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                 <a href="https://www.thailandpost.co.th/th/index/" target="_blank" rel="noopener noreferrer" class="logo-box" title="เว็บไซต์ไปรษณีย์ไทย">
                     <img src="https://i.postimg.cc/kGxbtwDw/480939523-952543977058068-1004086044975536579-n.jpg" alt="เว็บไซต์ไปรษณีย์ไทย">
                 </a>
-                <a href="https://track.thailandpost.co.th" target="_blank" rel="noopener noreferrer" class="logo-box" title="QMS ปณท">
+                <a href="http://qms.praisanee.com/Web/Tracking/singleTrackingOld.aspx" target="_blank" rel="noopener noreferrer" class="logo-box" title="QMS ปณท">
                     <img src="https://i.postimg.cc/fyx905kK/Logo-takr-aya-(3).png" alt="QMS ปณท">
                 </a>
             </div>
