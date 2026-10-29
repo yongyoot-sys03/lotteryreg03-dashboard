@@ -77,16 +77,20 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         return "", "", "", None, None, pd.DataFrame()
 
     max_date = df['Date_parsed'].max()
+    # คำนวณช่วงเวลาของกราฟเส้นตามที่ผู้ใช้เลือกจริง
     if selected_time_days == 1:
-        filtered_df = df[df['Date_parsed'] == max_date]
+        # หากเลือก "1 วัน" ให้ดึงข้อมูลย้อนหลัง 2 วัน เพื่อให้มีเส้นลากเปรียบเทียบกับวันก่อนหน้า
+        trend_cutoff = max_date - pd.Timedelta(days=1)
     else:
-        cutoff = max_date - pd.Timedelta(days=selected_time_days)
-        filtered_df = df[df['Date_parsed'] >= cutoff]
+        trend_cutoff = max_date - pd.Timedelta(days=selected_time_days)
 
+    trend_df = df.copy()
     if selected_region_display != "ALL":
-        filtered_df = filtered_df[filtered_df['Region_Display'] == selected_region_display]
+        trend_df = trend_df[trend_df['Region_Display'] == selected_region_display]
     if selected_branch != "ALL":
-        filtered_df = filtered_df[filtered_df['Branch'] == selected_branch]
+        trend_df = trend_df[trend_df['Branch'] == selected_branch]
+
+    daily_trend = trend_df[trend_df['Date_parsed'] >= trend_cutoff].groupby('Date_parsed')[['P', 'S']].sum().reset_index().sort_values('Date_parsed')
 
     latest_df = filtered_df.groupby(['Region_Display', 'Branch'])[['P', 'S', 'Total']].sum().reset_index()
     risk_info = latest_df['Total'].apply(get_risk_info).tolist()
@@ -308,7 +312,7 @@ body, .gradio-container {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* บังคับให้ Radio Grid ไหลจากบนลงล่างแยกเป็น 3 คอลัมน์แนวตั้ง */
+/* แผงปุ่มช่วงเวลา 3 คอลัมน์ แถวบน: 1 วัน | 1 เดือน | 1 ปี */
 .time-radio-grid {
     background: transparent !important;
     border: none !important;
@@ -317,9 +321,7 @@ body, .gradio-container {
 
 .time-radio-grid .wrap {
     display: grid !important;
-    grid-auto-flow: column !important; /* บังคับให้เรียงลงแนวตั้งก่อน */
-    grid-template-rows: repeat(4, 1fr) !important; /* คอลัมน์แรกมี 4 แถว (1, 3, 7, 15 วัน) */
-    grid-template-columns: repeat(3, 1fr) !important; /* 3 คอลัมน์เท่ากัน */
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 6px !important;
 }
 
@@ -332,7 +334,6 @@ body, .gradio-container {
     justify-content: center !important;
     align-items: center !important;
     cursor: pointer !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
     min-height: 32px !important;
 }
 
@@ -341,7 +342,6 @@ body, .gradio-container {
     border-color: #94A3B8 !important;
 }
 
-/* ปุ่มที่ถูกเลือก */
 .time-radio-grid label.selected {
     background: #0284C7 !important;
     border-color: #0284C7 !important;
@@ -359,7 +359,6 @@ body, .gradio-container {
     color: #334155 !important;
 }
 
-/* ซ่อนจุดกลมดั้งเดิม */
 .time-radio-grid input[type="radio"] {
     display: none !important;
 }
@@ -534,19 +533,14 @@ body, .gradio-container {
 region_choices = ["ALL", "30xxx นครราชสีมา", "31xxx บุรีรัมย์", "32xxx สุรินทร์", "36xxx ชัยภูมิ", "45xxx ร้อยเอ็ด"]
 branch_list = ["ALL"] + (sorted(df_base['Branch'].dropna().unique().tolist()) if not df_base.empty else [])
 
-# จัดลำดับตัวเลือกให้อ่านไหลลงตาม 3 คอลัมน์แนวตั้ง: วัน (คอลัมน์ 1) | เดือน (คอลัมน์ 2) | ปี (คอลัมน์ 3)
-# เรียงลำดับตามแนวตั้ง: กลุ่มวัน 4 ค่า -> กลุ่มเดือน 3 ค่า -> กลุ่มปี 1 ค่า
+# จัดเรียง 3 คอลัมน์: แถวที่ 1 จะได้ [1 วัน] [1 เดือน] [1 ปี] ตรงกันพอดี
 time_choices = [
-    ("1 วัน", 1),
-    ("3 วัน", 3),
-    ("7 วัน", 7),
-    ("15 วัน", 15),
-    ("1 เดือน", 30),
-    ("3 เดือน", 90),
-    ("6 เดือน", 180),
-    ("1 ปี", 365)
+    ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
+    ("3 วัน", 3), ("3 เดือน", 90), ("", 365),       # ช่องว่างรักษาโครงสร้าง 3 คอลัมน์
+    ("7 วัน", 7), ("6 เดือน", 180), ("", 365),
+    ("15 วัน", 15), ("", 365), ("", 365)
 ]
-# กรองตัวเลือกจริงสำหรับ Radio
+# กรองเอาเฉพาะปุ่มที่มีข้อความจริง
 clean_time_choices = [
     ("1 วัน", 1), ("1 เดือน", 30), ("1 ปี", 365),
     ("3 วัน", 3), ("3 เดือน", 90),
