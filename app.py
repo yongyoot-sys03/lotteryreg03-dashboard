@@ -107,21 +107,23 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
     total_s = int(latest_df['S'].sum()) if not latest_df.empty else 0
     risk_branches = len(latest_df[latest_df['Risk Code'] == 1])
 
-    # 1. แบนเนอร์แจ้งเตือน AI Alert
+    # 1. แบนเนอร์แจ้งเตือน AI Alert ตัวอักษรสีขาว + ไฟไซเรนกระพริบ
     top_crit = latest_df[latest_df['Risk Code'] == 1]
     if not top_crit.empty:
         crit_branch = top_crit.iloc[0]['Branch']
         banner_html = f"""
         <div class="alert-banner">
-            <span style="font-size:15px; font-weight:700;">🚨 AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🔴 สุ่มเสี่ยง: ประเมินพบ '{crit_branch}' คาดว่าจะดำเนินการไม่ได้ตามมาตรฐาน SLA ที่ ปณท กำหนด! ]</span>
+            <span class="siren-blink">🚨</span>
+            <span style="font-weight:700;">AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
+            <span>[ 🔴 วิกฤต: ประเมินพบ 'ที่ทำการ {crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
         </div>
         """
     else:
         banner_html = """
         <div class="alert-banner alert-safe">
-            <span style="font-size:15px; font-weight:700;">✅ AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🟢 ปกติ: ปริมาณงานจัดส่งสลากฯ ของทุกที่ทำการเป็นไปตามมาตรฐาน SLA ของ ปณท]</span>
+            <span class="safe-icon">✅</span>
+            <span style="font-weight:700;">AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
+            <span>[ 🟢 ปกติ: ปริมาณงานจัดส่งสลากฯ ของทุกที่ทำการเป็นไปตามมาตรฐาน SLA ของ ปณท. ]</span>
         </div>
         """
 
@@ -437,33 +439,77 @@ body, .gradio-container {
     border-color: #94A3B8;
 }
 
-/* ================= Alert Banner ================= */
+/* ================= Alert Banner ตัวอักษรสีขาว + ไฟไซเรนกระพริบนีออน ================= */
 .alert-banner {
-    background: linear-gradient(90deg, #FF4B2B, #FF416C);
-    color: #FFFFFF;
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-size: 14px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    box-shadow: 0 4px 12px rgba(255, 75, 43, 0.25);
-    transition: all 0.3s ease;
+    background: linear-gradient(90deg, #E11D48 0%, #BE123C 50%, #9F1239 100%) !important;
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+    font-size: 14.5px !important;
+    margin-bottom: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    /* แอนิเมชันไฟแสงฉุกเฉินส่องวาบ */
+    animation: emergency-glow 1.5s infinite alternate ease-in-out !important;
 }
 
-.alert-banner:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 75, 43, 0.4);
+/* บังคับตัวหนังสือและแท็กภายในทั้งหมดเป็นสีขาวบริสุทธิ์ */
+.alert-banner,
+.alert-banner span,
+.alert-banner b,
+.alert-banner strong,
+.alert-banner u {
+    color: #FFFFFF !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
+/* แอนิเมชันไอคอนไซเรน 🚨 ให้หมุนสั่นกระพริบเหมือนไฟหมุนกู้ภัย */
+.siren-blink {
+    font-size: 22px !important;
+    display: inline-block !important;
+    animation: siren-alarm 0.8s infinite ease-in-out !important;
+}
+
+/* กรณีสถานะปกติ (สีเขียวมรกต) */
 .alert-safe {
-    background: linear-gradient(90deg, #10B981, #059669) !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+    background: linear-gradient(90deg, #059669 0%, #047857 50%, #065F46 100%) !important;
+    animation: safe-glow 2.5s infinite alternate ease-in-out !important;
 }
 
-.alert-safe:hover {
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4) !important;
+.safe-icon {
+    font-size: 20px !important;
+    display: inline-block !important;
+}
+
+/* คีย์เฟรมไฟไซเรนฉุกเฉินวาบ */
+@keyframes emergency-glow {
+    0% {
+        box-shadow: 0 0 10px rgba(225, 29, 72, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.2);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(244, 63, 94, 0.95), 0 0 40px rgba(225, 29, 72, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.4);
+        filter: brightness(1.15);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(225, 29, 72, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.2);
+        filter: brightness(1);
+    }
+}
+
+@keyframes safe-glow {
+    0% { box-shadow: 0 0 8px rgba(5, 150, 105, 0.4); }
+    100% { box-shadow: 0 0 18px rgba(16, 185, 129, 0.7); }
+}
+
+/* คีย์เฟรมการกระพริบและสั่นของไซเรน */
+@keyframes siren-alarm {
+    0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #FFF); }
+    25% { transform: scale(1.25) rotate(-15deg); filter: drop-shadow(0 0 10px #FFD700); }
+    50% { transform: scale(1.1) rotate(0deg); filter: drop-shadow(0 0 4px #FFF); }
+    75% { transform: scale(1.25) rotate(15deg); filter: drop-shadow(0 0 10px #FF4B2B); }
+    100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #FFF); }
 }
 
 .section-title {
