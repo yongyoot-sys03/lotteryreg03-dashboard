@@ -60,7 +60,8 @@ def get_risk_info(total):
 df_base = load_real_data()
 
 def sync_branch_options(selected_region_display):
-    df = load_real_data() if df_base.empty else df_base.copy()
+    # ดึงข้อมูลสดใหม่จาก Google Sheets ทุกครั้งที่กด Refresh หรือเปลี่ยนตัวกรอง
+    df = load_real_data()
     if df.empty or selected_region_display == "ALL":
         branches = ["ALL"] + sorted(df['Branch'].dropna().unique().tolist())
     else:
