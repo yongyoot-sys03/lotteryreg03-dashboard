@@ -697,6 +697,51 @@ clean_time_choices = [
     ("15 วัน", 15)
 ]
 
+def parse_user_role(request: gr.Request):
+    """
+    ดึงค่า user_id และ role จาก URL Query String
+    ตัวอย่าง URL: https://.../?user_id=30000&role=MANAGER
+    """
+    user_id = "Guest"
+    role = "OFFICER"
+    
+    if request:
+        params = request.query_params
+        user_id = params.get("user_id", "Guest")
+        role = params.get("role", "OFFICER")
+        
+    # Profile Badge ที่แสดงบนมุมขวาบน
+    profile_html = f"👤 ผู้ใช้งาน: <b>{user_id}</b> | สิทธิ์: <span style='color:#0284c7; font-weight:700;'>{role}</span>"
+    
+    # กำหนดค่าเริ่มต้นของ Dropdown ตาม Role
+    default_region = "ALL"
+    default_branch = "ALL"
+    region_interactive = True
+    branch_interactive = True
+    
+    # ตัวอย่างตรรกะ Role-Based: หากเป็นระดับ ปจ. (เช่น รหัสลงท้าย 000) ให้ล็อกพื้นที่ตามสังกัด
+    if role == "MANAGER":
+        if user_id.startswith("30"): default_region = "30xxx นครราชสีมา"
+        elif user_id.startswith("31"): default_region = "31xxx บุรีรัมย์"
+        elif user_id.startswith("32"): default_region = "32xxx สุรินทร์"
+        elif user_id.startswith("36"): default_region = "36xxx ชัยภูมิ"
+        elif user_id.startswith("45"): default_region = "45xxx ร้อยเอ็ด"
+        region_interactive = False  # ห้ามเปลี่ยน ปจ.
+        
+    elif role == "OFFICER" and user_id != "Guest":
+        # ค้นหาสาขาที่ตรงกับ user_id
+        matching_branches = [b for b in branch_list if b.startswith(user_id)]
+        if matching_branches:
+            default_branch = matching_branches[0]
+            branch_interactive = False  # ล็อกดูได้เฉพาะที่ทำการตนเอง
+            
+    return (
+        profile_html, 
+        gr.update(value=default_region, interactive=region_interactive),
+        gr.update(value=default_branch, interactive=branch_interactive)
+    )
+
+######################
 with gr.Blocks(title="ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล", css=custom_css) as demo:
     
     with gr.Row():
@@ -748,7 +793,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                     <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
                     <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
                 </div>
-                <div class="btn-profile">👤 Executive Profile</div>
+                profile_badge = gr.HTML("""<div class="btn-profile">👤 กำลังตรวจสอบสิทธิ์...</div>""")
             </div>
             """)
 
@@ -800,7 +845,16 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
     
     export_btn.click(fn=None, js="() => { window.print(); }")
 
-    demo.load(fn=update_dashboard, inputs=inputs, outputs=outputs)
+    # โหลดข้อมูลและเซ็ตค่าเริ่มต้นตาม Role เมื่อเข้าสู่ระบบ
+    demo.load(
+        fn=parse_user_role,
+        inputs=None,
+        outputs=[profile_badge, region_filter, branch_filter]
+    ).then(
+        fn=update_dashboard,
+        inputs=inputs,
+        outputs=outputs
+    )
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860)
