@@ -711,7 +711,7 @@ def parse_user_role(request: gr.Request):
         role = params.get("role", "OFFICER")
         
     # Profile Badge ที่แสดงบนมุมขวาบน
-    profile_html = f"👤 ผู้ใช้งาน: <b>{user_id}</b> | สิทธิ์: <span style='color:#0284c7; font-weight:700;'>{role}</span>"
+    profile_html = f'<div class="btn-profile">&#128100; ผู้ใช้งาน: <b>{user_id}</b> | สิทธิ์: <span style="color:#0284c7; font-weight:700;">{role}</span></div>'
     
     # กำหนดค่าเริ่มต้นของ Dropdown ตาม Role
     default_region = "ALL"
@@ -793,7 +793,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                     <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
                     <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
                 </div>
-                profile_badge = gr.HTML("""<div class="btn-profile">👤 กำลังตรวจสอบสิทธิ์...</div>""")
+                profile_badge = gr.HTML('<div class="btn-profile">&#128100; กำลังตรวจสอบสิทธิ์...</div>')
             </div>
             """)
 
