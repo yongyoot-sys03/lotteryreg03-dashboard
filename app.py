@@ -115,7 +115,7 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         <div class="alert-banner">
             <span class="siren-blink">🚨</span>
             <span style="font-weight:700;">AI ALERT BANNER (ระบบแจ้งเตือน SLA อัจฉริยะ) :</span>
-            <span>[ 🔴 วิกฤต: ประเมินพบ 'ที่ทำการ {crit_branch}' คาดว่าจะจัดส่งสลากฯ ไม่ได้ตามมาตรฐาน SLA ที่ ปณท. กำหนด! ]</span>
+            <span>[ 🔴 Alert (ด่วน): ประเมินพบ 'ที่ทำการ {crit_branch}' มีชิ้นงานที่ยังไม่บันทึกผล (P/S/K/L) โปรดตรวจสอบข้อมูลผ่านระบบ QMS-ปณท ด่วนทันที! ]</span>
         </div>
         """
     else:
