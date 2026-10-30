@@ -698,10 +698,6 @@ clean_time_choices = [
 ]
 
 def parse_user_role(request: gr.Request):
-    """
-    ดึงค่า user_id และ role จาก URL Query String
-    ตัวอย่าง URL: https://.../?user_id=30000&role=MANAGER
-    """
     user_id = "Guest"
     role = "OFFICER"
     
@@ -710,30 +706,26 @@ def parse_user_role(request: gr.Request):
         user_id = params.get("user_id", "Guest")
         role = params.get("role", "OFFICER")
         
-    # Profile Badge ที่แสดงบนมุมขวาบน
     profile_html = f'<div class="btn-profile">&#128100; ผู้ใช้งาน: <b>{user_id}</b> | สิทธิ์: <span style="color:#0284c7; font-weight:700;">{role}</span></div>'
     
-    # กำหนดค่าเริ่มต้นของ Dropdown ตาม Role
     default_region = "ALL"
     default_branch = "ALL"
     region_interactive = True
     branch_interactive = True
     
-    # ตัวอย่างตรรกะ Role-Based: หากเป็นระดับ ปจ. (เช่น รหัสลงท้าย 000) ให้ล็อกพื้นที่ตามสังกัด
     if role == "MANAGER":
         if user_id.startswith("30"): default_region = "30xxx นครราชสีมา"
         elif user_id.startswith("31"): default_region = "31xxx บุรีรัมย์"
         elif user_id.startswith("32"): default_region = "32xxx สุรินทร์"
         elif user_id.startswith("36"): default_region = "36xxx ชัยภูมิ"
         elif user_id.startswith("45"): default_region = "45xxx ร้อยเอ็ด"
-        region_interactive = False  # ห้ามเปลี่ยน ปจ.
+        region_interactive = False
         
     elif role == "OFFICER" and user_id != "Guest":
-        # ค้นหาสาขาที่ตรงกับ user_id
         matching_branches = [b for b in branch_list if b.startswith(user_id)]
         if matching_branches:
             default_branch = matching_branches[0]
-            branch_interactive = False  # ล็อกดูได้เฉพาะที่ทำการตนเอง
+            branch_interactive = False
             
     return (
         profile_html, 
@@ -787,15 +779,17 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
 
         # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
-            gr.HTML("""
-            <div class="main-header">
-                <div>
-                    <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
-                    <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
-                </div>
-                profile_badge = gr.HTML('<div class="btn-profile">&#128100; กำลังตรวจสอบสิทธิ์...</div>')
-            </div>
-            """)
+            with gr.Row(elem_classes=["main-header"]):
+                with gr.Column(scale=8):
+                    gr.HTML("""
+                    <div>
+                        <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
+                        <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
+                    </div>
+                    """)
+                with gr.Column(scale=3):
+                    # 💡 ประกาศตัวแปร profile_badge ตรงนี้ เพื่อแก้ NameError
+                    profile_badge = gr.HTML('<div class="btn-profile">&#128100; กำลังตรวจสอบสิทธิ์...</div>')
 
             alert_banner = gr.HTML()
             kpi_header = gr.HTML()
