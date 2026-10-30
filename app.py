@@ -669,7 +669,7 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                 </a>
             </div>
             <div style="font-size:15px; font-weight:700; color:#1E293B; margin-bottom:10px;">⚙️ แผงควบคุม</div>
-            <div style="font-size:12px; font-weight:600; color:#475569;">[ 🕒 วิเคราะห์ช่วงเวลา ]</div>
+            <div style="font-size:12px; font-weight:600; color:#475569;">[ 🕒 วิเคราะห์ช่วงเวลาย้อนหลัง/ปัจจุบัน ]</div>
             """)
             
             time_filter = gr.Radio(
