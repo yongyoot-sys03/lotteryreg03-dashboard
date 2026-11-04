@@ -307,7 +307,6 @@ body, .gradio-container {
     cursor: pointer;
 }
 
-/* Hover: โลโก้ลอยนูนขึ้น */
 .logo-box:hover {
     transform: translateY(-4px) scale(1.05);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
@@ -318,7 +317,7 @@ body, .gradio-container {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    pointer-events: none; /* ส่งผ่านการคลิกไปยังลิงก์ <a> */
+    pointer-events: none;
 }
 
 /* ================= Sidebar แผงควบคุม ================= */
@@ -362,7 +361,6 @@ body, .gradio-container {
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Hover: ปุ่มช่วงเวลาลอยนูนและเปลี่ยนสี */
 .time-radio-grid label:hover {
     background: #FFFFFF !important;
     border-color: #0284C7 !important;
@@ -392,97 +390,139 @@ body, .gradio-container {
     display: none !important;
 }
 
-/* ================= Header ส่วนหัว ================= */
-.main-header {
-    background: rgba(255, 255, 255, 0.75) !important;
-    backdrop-filter: blur(16px) !important;
-    border-radius: 16px !important;
-    padding: 18px 24px 20px 24px !important;
-    border: 1px solid rgba(255, 255, 255, 0.8) !important;
-    margin-bottom: 12px !important;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
-    position: relative !important; /* สำคัญ: ให้อิงพิกัดภายในกรอบ */
+/* ================= Modern Executive Header ================= */
+.executive-header-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px) !important;
+    border-radius: 18px !important;
+    padding: 16px 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
+    border-left: 6px solid #ED1C24 !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     overflow: visible !important;
 }
 
-.header-content {
-    width: 100% !important;
-    overflow: visible !important; /* ปิด Scroll bar ทุกรูปแบบ */
+.executive-header-card:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.07) !important;
+    transform: translateY(-2px) !important;
 }
 
-/* ส่วนหัวข้อหลัก: บรรทัดเดียว ตัวใหญ่คมชัด */
-.title-text {
+.header-inner {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    overflow: visible !important;
+}
+
+.header-top-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+}
+
+.title-text-exec {
     font-size: 21px !important;
     font-weight: 700 !important;
-    color: #334155 !important;
-    margin: 0 !important;
-    white-space: nowrap !important;
-    overflow: visible !important;
+    color: #1E293B !important;
     display: flex !important;
     align-items: center !important;
-    gap: 4px !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.2px !important;
 }
 
-/* สีแดงเน้นคำว่า ความเสี่ยง */
-.hl-red {
+.icon-pulse {
+    font-size: 22px !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.hl-tag-red {
+    background: #FEE2E2 !important;
     color: #DC2626 !important;
     font-weight: 800 !important;
-    padding: 0 2px !important;
-    text-shadow: 0 1px 2px rgba(220, 38, 38, 0.15) !important;
+    padding: 2px 10px !important;
+    border-radius: 8px !important;
+    border: 1px solid #FECACA !important;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12) !important;
 }
 
-/* สีดำเน้นคำว่า วิเคราะห์ SLA */
-.hl-black {
+.hl-text-dark {
     color: #0F172A !important;
     font-weight: 800 !important;
-    padding: 0 2px !important;
 }
 
-/* สีน้ำเงินเน้นคำว่า สลากกินแบ่งรัฐบาล */
-.hl-blue {
+.hl-text-blue {
     color: #1D4ED8 !important;
     font-weight: 800 !important;
-    padding: 0 2px !important;
     text-shadow: 0 1px 2px rgba(29, 78, 216, 0.15) !important;
 }
 
-/* ป้ายเน้นคำว่า ในพื้นที่ ปข.3 */
-.badge-reg3 {
+.badge-reg3-exec {
     background: linear-gradient(135deg, #0284C7, #0369A1) !important;
     color: #FFFFFF !important;
-    font-size: 14px !important;
+    font-size: 13px !important;
     font-weight: 600 !important;
-    padding: 2px 10px !important;
-    border-radius: 8px !important;
-    margin-left: 6px !important;
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
-    vertical-align: middle !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
 }
 
-.sub-text {
+.profile-capsule {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    padding: 5px 12px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+}
+
+.status-dot {
+    width: 8px !important;
+    height: 8px !important;
+    background: #10B981 !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 6px #10B981 !important;
+}
+
+.user-text {
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+}
+
+.role-pill {
+    background: #E2E8F0 !important;
+    color: #475569 !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+}
+
+.sub-text-exec {
     font-size: 13px !important;
     color: #64748B !important;
-    margin-top: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
-/* ป้ายแสดงสิทธิ์ผู้ใช้: ลอยอยู่มุมล่างขวาสุดของกรอบพอดี */
-.btn-profile-bottom {
-    position: absolute !important;
-    bottom: 14px !important;
-    right: 24px !important;
-    background: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    border-radius: 20px !important;
-    padding: 4px 14px !important;
-    font-size: 12px !important;
-    color: #475569 !important;
-    font-weight: 500 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
-    z-index: 5 !important;
-    cursor: default !important;
+.sub-text-exec b {
+    color: #334155 !important;
 }
 
-/* ================= Alert Banner ตัวอักษรสีขาว + ไฟไซเรนกระพริบนีออน ================= */
+.divider {
+    color: #CBD5E1 !important;
+}
+
+/* ================= Alert Banner ================= */
 .alert-banner {
     background: linear-gradient(90deg, #E11D48 0%, #BE123C 50%, #9F1239 100%) !important;
     border-radius: 12px !important;
@@ -493,11 +533,9 @@ body, .gradio-container {
     align-items: center !important;
     gap: 12px !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
-    /* แอนิเมชันไฟแสงฉุกเฉินส่องวาบ */
     animation: emergency-glow 1.5s infinite alternate ease-in-out !important;
 }
 
-/* บังคับตัวหนังสือและแท็กภายในทั้งหมดเป็นสีขาวบริสุทธิ์ */
 .alert-banner,
 .alert-banner span,
 .alert-banner b,
@@ -507,14 +545,12 @@ body, .gradio-container {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* แอนิเมชันไอคอนไซเรน 🚨 ให้หมุนสั่นกระพริบเหมือนไฟหมุนกู้ภัย */
 .siren-blink {
     font-size: 22px !important;
     display: inline-block !important;
     animation: siren-alarm 0.8s infinite ease-in-out !important;
 }
 
-/* กรณีสถานะปกติ (สีเขียวมรกต) */
 .alert-safe {
     background: linear-gradient(90deg, #059669 0%, #047857 50%, #065F46 100%) !important;
     animation: safe-glow 2.5s infinite alternate ease-in-out !important;
@@ -525,7 +561,6 @@ body, .gradio-container {
     display: inline-block !important;
 }
 
-/* คีย์เฟรมไฟไซเรนฉุกเฉินวาบ */
 @keyframes emergency-glow {
     0% {
         box-shadow: 0 0 10px rgba(225, 29, 72, 0.6), inset 0 0 8px rgba(255, 255, 255, 0.2);
@@ -546,7 +581,6 @@ body, .gradio-container {
     100% { box-shadow: 0 0 18px rgba(16, 185, 129, 0.7); }
 }
 
-/* คีย์เฟรมการกระพริบและสั่นของไซเรน */
 @keyframes siren-alarm {
     0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #FFF); }
     25% { transform: scale(1.25) rotate(-15deg); filter: drop-shadow(0 0 10px #FFD700); }
@@ -562,7 +596,7 @@ body, .gradio-container {
     margin-bottom: 10px;
 }
 
-/* ================= การ์ด EXECUTIVE KPIs (ไฮไลต์หลัก) ================= */
+/* ================= การ์ด EXECUTIVE KPIs ================= */
 .kpi-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -581,11 +615,9 @@ body, .gradio-container {
     border: 1px solid rgba(255, 255, 255, 0.9);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     cursor: pointer;
-    /* แอนิเมชันเวลาขยับเมาส์เข้า-ออก */
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Hover: การ์ด KPI นูนลอยขึ้น เปลี่ยนสีขอบและเงา */
 .kpi-card:hover {
     transform: translateY(-6px) scale(1.02);
     background: rgba(255, 255, 255, 0.98);
@@ -649,7 +681,6 @@ body, .gradio-container {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Hover: กรอบกราฟและตารางลอยนูนขึ้นมา */
 .glass-box:hover {
     transform: translateY(-4px);
     background: rgba(255, 255, 255, 0.88) !important;
@@ -822,13 +853,31 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
 
         # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
-            with gr.Column(elem_classes=["main-header"]):
+            with gr.Row(elem_classes=["executive-header-card"]):
                 gr.HTML("""
-                <div class="header-content">
-                    <div class="title-text">
-                        📦 ระบบประเมิน<span class="hl-red">ความเสี่ยง</span>และ<span class="hl-black">วิเคราะห์ SLA</span> การให้บริการจัดส่ง<span class="hl-blue">สลากกินแบ่งรัฐบาล</span> <span class="badge-reg3">ในพื้นที่ ปข.3</span>
+                <div class="header-inner">
+                    <!-- แถวบน: หัวข้อระบบแบบโมเดิร์น ไฮไลต์คำเด่นชัด -->
+                    <div class="header-top-row">
+                        <div class="title-text-exec">
+                            <span class="icon-pulse">📦</span> 
+                            <span>ระบบประเมิน</span>
+                            <span class="hl-tag-red">ความเสี่ยง</span>
+                            <span class="hl-text-dark">และ วิเคราะห์ SLA</span>
+                            <span>การให้บริการจัดส่ง</span>
+                            <span class="hl-text-blue">สลากกินแบ่งรัฐบาล</span>
+                            <span class="badge-reg3-exec">📍 พื้นที่ ปข.3</span>
+                        </div>
+                        <!-- แท็บสถานะผู้ใช้งานมุมขวาบนแบบ Capsule -->
+                        <div class="profile-capsule">
+                            <span class="status-dot"></span>
+                            <span class="user-text">👤 Guest</span>
+                            <span class="role-pill">OFFICER</span>
+                        </div>
                     </div>
-                    <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
+                    <!-- แถวล่าง: หน่วยงานและผู้พัฒนาระบบ -->
+                    <div class="sub-text-exec">
+                        🏢 หน่วยงานกำกับดูแล: <b>สำนักงานไปรษณีย์เขต 3</b> <span class="divider">|</span> พัฒนาระบบโดย: <b>ส่วนการตลาดและบริการลูกค้า</b>
+                    </div>
                 </div>
                 """)
                 # ปุ่มสิทธิ์ผู้ใช้วางอยู่ที่มุมล่างขวาสุดของการ์ด
