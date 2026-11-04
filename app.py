@@ -394,32 +394,30 @@ body, .gradio-container {
 
 /* ================= Header ส่วนหัว ================= */
 .main-header {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    border-radius: 16px;
-    padding: 16px 22px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px) !important;
+    border-radius: 16px !important;
+    padding: 18px 24px 20px 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.8) !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03) !important;
+    position: relative !important; /* สำคัญ: ให้อิงพิกัดภายในกรอบ */
+    overflow: visible !important;
 }
 
-.main-header:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
-    border-color: rgba(255, 255, 255, 0.95);
+.header-content {
+    width: 100% !important;
+    overflow: visible !important; /* ปิด Scroll bar ทุกรูปแบบ */
 }
 
 /* ส่วนหัวข้อหลัก: บรรทัดเดียว ตัวใหญ่คมชัด */
 .title-text {
-    font-size: 22px !important;
+    font-size: 21px !important;
     font-weight: 700 !important;
     color: #334155 !important;
     margin: 0 !important;
-    white-space: nowrap !important; /* บังคับให้อยู่ในบรรทัดเดียว ไม่ให้ตัดตกบรรทัด */
-    letter-spacing: -0.3px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
     display: flex !important;
     align-items: center !important;
     gap: 4px !important;
@@ -462,26 +460,26 @@ body, .gradio-container {
 }
 
 .sub-text {
-    font-size: 13px;
-    color: #64748B;
-    margin-top: 4px;
+    font-size: 13px !important;
+    color: #64748B !important;
+    margin-top: 6px !important;
 }
 
-.btn-profile {
-    background: #FFFFFF;
-    border: 1px solid #CBD5E1;
-    border-radius: 20px;
-    padding: 6px 16px;
-    font-size: 13px;
-    color: #334155;
-    font-weight: 500;
-    transition: all 0.25s ease;
-}
-
-.btn-profile:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    border-color: #94A3B8;
+/* ป้ายแสดงสิทธิ์ผู้ใช้: ลอยอยู่มุมล่างขวาสุดของกรอบพอดี */
+.btn-profile-bottom {
+    position: absolute !important;
+    bottom: 14px !important;
+    right: 24px !important;
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 20px !important;
+    padding: 4px 14px !important;
+    font-size: 12px !important;
+    color: #475569 !important;
+    font-weight: 500 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    z-index: 5 !important;
+    cursor: default !important;
 }
 
 /* ================= Alert Banner ตัวอักษรสีขาว + ไฟไซเรนกระพริบนีออน ================= */
@@ -824,19 +822,17 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
 
         # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
-            with gr.Row(elem_classes=["main-header"]):
-                with gr.Column(scale=8):
-                    gr.HTML("""
-                    <div style="flex: 1; overflow-x: auto;">
-                        <div class="title-text">
-                            📦 ระบบประเมิน<span class="hl-red">ความเสี่ยง</span>และ<span class="hl-black">วิเคราะห์ SLA</span> การให้บริการจัดส่ง<span class="hl-blue">สลากกินแบ่งรัฐบาล</span> <span class="badge-reg3">ในพื้นที่ ปข.3</span>
-                        </div>
-                        <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
+            with gr.Column(elem_classes=["main-header"]):
+                gr.HTML("""
+                <div class="header-content">
+                    <div class="title-text">
+                        📦 ระบบประเมิน<span class="hl-red">ความเสี่ยง</span>และ<span class="hl-black">วิเคราะห์ SLA</span> การให้บริการจัดส่ง<span class="hl-blue">สลากกินแบ่งรัฐบาล</span> <span class="badge-reg3">ในพื้นที่ ปข.3</span>
                     </div>
-                    """)
-                with gr.Column(scale=3, min_width=200):
-                    # ตัวแปร profile_badge รองรับการอัปเดตสิทธิ์ผู้ใช้
-                    profile_badge = gr.HTML('<div class="btn-profile">👤 ผู้ใช้งาน: Guest | สิทธิ์: OFFICER</div>')
+                    <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
+                </div>
+                """)
+                # ปุ่มสิทธิ์ผู้ใช้วางอยู่ที่มุมล่างขวาสุดของการ์ด
+                profile_badge = gr.HTML('<div class="btn-profile-bottom">👤 ผู้ใช้งาน: Guest | สิทธิ์: OFFICER</div>')
 
             alert_banner = gr.HTML()
             kpi_header = gr.HTML()
