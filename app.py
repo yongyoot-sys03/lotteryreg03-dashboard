@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import spaces
+import time
 
 # แผนผังกลุ่ม ปจ.
 REGION_MAP = {
@@ -15,13 +16,15 @@ REGION_MAP = {
 
 def load_real_data():
     try:
-        url = "https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029"
+        # 1. เพิ่ม timestamp ป้องกัน Google Sheets แคชไฟล์ CSV เก่า
+        cache_buster = int(time.time())
+        url = f"https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029&_cb={cache_buster}"
         df = pd.read_csv(url)
         
         col_date = df.columns[2]     # C: วันที่สุ่มตรวจ
         col_region = df.columns[3]   # D: กลุ่ม ปจ.
         col_zip = df.columns[4]      # E: รหัสไปรษณีย์
-        col_branch = df.columns[5]   # F: ที่ทำการ (งานจ่ายสลาก)
+        col_branch = df.columns[5]   # F: ที่ทำการ
         col_p = df.columns[6]        # G: ค้าง P
         col_s = df.columns[7]        # H: ค้าง S/K/L
 
@@ -35,7 +38,6 @@ def load_real_data():
         df['Raw_Branch'] = df['Raw_Branch'].astype(str).str.strip()
         df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch']
         
-        # ปรับชื่อกลุ่ม ปจ. ให้มีรหัสนำหน้า เช่น 30xxx นครราชสีมา
         df['Region_Display'] = df['Region'].astype(str).str.strip().map(lambda x: REGION_MAP.get(x, x))
         
         df['P'] = pd.to_numeric(df['P'], errors='coerce').fillna(0)
@@ -43,10 +45,11 @@ def load_real_data():
         df['Total'] = df['P'] + df['S']
         df = df[df['Raw_Branch'].notna() & (df['Raw_Branch'] != '') & (df['Raw_Branch'] != 'nan')]
         
+        # 2. บังคับอ่านแบบ เดือน/วัน/ปี (M/D/YYYY) เพื่อให้ 11/4/2026 คือ 4 พ.ย. 2026 ถูกต้อง
         df['Date'] = df['Date'].astype(str).str.strip()
         df['Date_parsed'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
-        df['Date_parsed'] = df['Date_parsed'].fillna(pd.to_datetime(df['Date'], format='%d/%m/%Y', errors='coerce'))
         df['Date_parsed'] = df['Date_parsed'].fillna(pd.to_datetime(df['Date'], errors='coerce'))
+        
         df = df[df['Date_parsed'].notna()]
         return df
     except Exception:
@@ -71,7 +74,7 @@ def sync_branch_options(selected_region_display):
 
 @spaces.GPU
 def update_dashboard(selected_time_days, selected_region_display, selected_branch, risk_critical, risk_watch, risk_normal):
-    df = load_real_data() if df_base.empty else df_base.copy()
+    df = load_real_data()  # บังคับดึงข้อมูลสดใหม่เสมอ
     if df.empty:
         return "", "", "", None, None, pd.DataFrame()
 
