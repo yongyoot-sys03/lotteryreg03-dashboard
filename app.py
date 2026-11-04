@@ -412,11 +412,53 @@ body, .gradio-container {
     border-color: rgba(255, 255, 255, 0.95);
 }
 
+/* ส่วนหัวข้อหลัก: บรรทัดเดียว ตัวใหญ่คมชัด */
 .title-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1E293B;
-    margin: 0;
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+    margin: 0 !important;
+    white-space: nowrap !important; /* บังคับให้อยู่ในบรรทัดเดียว ไม่ให้ตัดตกบรรทัด */
+    letter-spacing: -0.3px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* สีแดงเน้นคำว่า ความเสี่ยง */
+.hl-red {
+    color: #DC2626 !important;
+    font-weight: 800 !important;
+    padding: 0 2px !important;
+    text-shadow: 0 1px 2px rgba(220, 38, 38, 0.15) !important;
+}
+
+/* สีดำเน้นคำว่า วิเคราะห์ SLA */
+.hl-black {
+    color: #0F172A !important;
+    font-weight: 800 !important;
+    padding: 0 2px !important;
+}
+
+/* สีน้ำเงินเน้นคำว่า สลากกินแบ่งรัฐบาล */
+.hl-blue {
+    color: #1D4ED8 !important;
+    font-weight: 800 !important;
+    padding: 0 2px !important;
+    text-shadow: 0 1px 2px rgba(29, 78, 216, 0.15) !important;
+}
+
+/* ป้ายเน้นคำว่า ในพื้นที่ ปข.3 */
+.badge-reg3 {
+    background: linear-gradient(135deg, #0284C7, #0369A1) !important;
+    color: #FFFFFF !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    padding: 2px 10px !important;
+    border-radius: 8px !important;
+    margin-left: 6px !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
+    vertical-align: middle !important;
 }
 
 .sub-text {
@@ -785,14 +827,16 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             with gr.Row(elem_classes=["main-header"]):
                 with gr.Column(scale=8):
                     gr.HTML("""
-                    <div>
-                        <div class="title-text">📦 ระบบประเมินความเสี่ยงและวิเคราะห์ SLA การให้บริการจัดส่งสลากกินแบ่งรัฐบาล ในพื้นที่ ปข.3</div>
+                    <div style="flex: 1; overflow-x: auto;">
+                        <div class="title-text">
+                            📦 ระบบประเมิน<span class="hl-red">ความเสี่ยง</span>และ<span class="hl-black">วิเคราะห์ SLA</span> การให้บริการจัดส่ง<span class="hl-blue">สลากกินแบ่งรัฐบาล</span> <span class="badge-reg3">ในพื้นที่ ปข.3</span>
+                        </div>
                         <div class="sub-text">🏢 พัฒนาระบบโดย: <b>สำนักงานไปรษณีย์เขต 3 | ส่วนการตลาดและบริการลูกค้า</b></div>
                     </div>
                     """)
-                with gr.Column(scale=3):
-                    # 💡 ประกาศตัวแปร profile_badge ตรงนี้ เพื่อแก้ NameError
-                    profile_badge = gr.HTML('<div class="btn-profile">&#128100; กำลังตรวจสอบสิทธิ์...</div>')
+                with gr.Column(scale=3, min_width=200):
+                    # ตัวแปร profile_badge รองรับการอัปเดตสิทธิ์ผู้ใช้
+                    profile_badge = gr.HTML('<div class="btn-profile">👤 ผู้ใช้งาน: Guest | สิทธิ์: OFFICER</div>')
 
             alert_banner = gr.HTML()
             kpi_header = gr.HTML()
