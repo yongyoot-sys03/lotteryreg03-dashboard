@@ -856,7 +856,6 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             with gr.Row(elem_classes=["executive-header-card"]):
                 gr.HTML("""
                 <div class="header-inner">
-                    <!-- แถวบน: หัวข้อระบบแบบโมเดิร์น ไฮไลต์คำเด่นชัด -->
                     <div class="header-top-row">
                         <div class="title-text-exec">
                             <span class="icon-pulse">📦</span> 
@@ -867,21 +866,17 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                             <span class="hl-text-blue">สลากกินแบ่งรัฐบาล</span>
                             <span class="badge-reg3-exec">📍 พื้นที่ ปข.3</span>
                         </div>
-                        <!-- แท็บสถานะผู้ใช้งานมุมขวาบนแบบ Capsule -->
                         <div class="profile-capsule">
                             <span class="status-dot"></span>
                             <span class="user-text">👤 Guest</span>
                             <span class="role-pill">OFFICER</span>
                         </div>
                     </div>
-                    <!-- แถวล่าง: หน่วยงานและผู้พัฒนาระบบ -->
                     <div class="sub-text-exec">
                         🏢 หน่วยงานกำกับดูแล: <b>สำนักงานไปรษณีย์เขต 3</b> <span class="divider">|</span> พัฒนาระบบโดย: <b>ส่วนการตลาดและบริการลูกค้า</b>
                     </div>
                 </div>
                 """)
-                # ปุ่มสิทธิ์ผู้ใช้วางอยู่ที่มุมล่างขวาสุดของการ์ด
-                profile_badge = gr.HTML('<div class="btn-profile-bottom">👤 ผู้ใช้งาน: Guest | สิทธิ์: OFFICER</div>')
 
             alert_banner = gr.HTML()
             kpi_header = gr.HTML()
