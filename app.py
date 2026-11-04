@@ -475,12 +475,15 @@ body, .gradio-container {
 .profile-capsule {
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 8px !important;
     background: #F8FAFC !important;
     border: 1px solid #E2E8F0 !important;
-    padding: 5px 12px !important;
+    padding: 6px 14px !important;
     border-radius: 30px !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
+    margin-left: auto !important; /* ดันปุ่มไปชิดขวาสุด */
+    width: fit-content !important;
 }
 
 .status-dot {
@@ -854,9 +857,9 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
         # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
             with gr.Row(elem_classes=["executive-header-card"]):
-                gr.HTML("""
-                <div class="header-inner">
-                    <div class="header-top-row">
+                with gr.Column(scale=9):
+                    gr.HTML("""
+                    <div class="header-inner">
                         <div class="title-text-exec">
                             <span class="icon-pulse">📦</span> 
                             <span>ระบบประเมิน</span>
@@ -866,17 +869,20 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                             <span class="hl-text-blue">สลากกินแบ่งรัฐบาล</span>
                             <span class="badge-reg3-exec">📍 พื้นที่ ปข.3</span>
                         </div>
-                        <div class="profile-capsule">
-                            <span class="status-dot"></span>
-                            <span class="user-text">👤 Guest</span>
-                            <span class="role-pill">OFFICER</span>
+                        <div class="sub-text-exec">
+                            🏢 หน่วยงานกำกับดูแล: <b>สำนักงานไปรษณีย์เขต 3</b> <span class="divider">|</span> พัฒนาระบบโดย: <b>ส่วนการตลาดและบริการลูกค้า</b>
                         </div>
                     </div>
-                    <div class="sub-text-exec">
-                        🏢 หน่วยงานกำกับดูแล: <b>สำนักงานไปรษณีย์เขต 3</b> <span class="divider">|</span> พัฒนาระบบโดย: <b>ส่วนการตลาดและบริการลูกค้า</b>
+                    """)
+                with gr.Column(scale=3, min_width=220):
+                    # 💡 ประกาศตัวแปร profile_badge เพื่อแก้ NameError: 'profile_badge' is not defined
+                    profile_badge = gr.HTML("""
+                    <div class="profile-capsule">
+                        <span class="status-dot"></span>
+                        <span class="user-text">👤 Guest</span>
+                        <span class="role-pill">OFFICER</span>
                     </div>
-                </div>
-                """)
+                    """)
 
             alert_banner = gr.HTML()
             kpi_header = gr.HTML()
