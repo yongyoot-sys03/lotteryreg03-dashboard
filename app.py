@@ -397,46 +397,43 @@ body, .gradio-container {
     border-radius: 18px !important;
     padding: 16px 24px !important;
     border: 1px solid rgba(255, 255, 255, 0.95) !important;
-    border-left: 6px solid #ED1C24 !important; /* แถบแดง ปณท. */
+    border-left: 6px solid #ED1C24 !important; /* แถบแดงเอกลักษณ์ ปณท. */
     margin-bottom: 14px !important;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04) !important;
-    position: relative !important;
-    overflow: visible !important; /* ปิด Scroll bar ทั้งหมด */
+    position: relative !important; /* อิงพิกัดให้ปุ่มโปรไฟล์ด้านใน */
+    overflow: visible !important;
+    display: block !important;
 }
 
 .header-inner {
     width: 100% !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 8px !important;
-    position: relative !important;
+    gap: 6px !important;
+    padding-right: 200px !important; /* เว้นที่ว่างฝั่งขวาไว้ 200px สำหรับปุ่ม Profile */
     overflow: visible !important;
 }
 
 .header-top-row {
     display: flex !important;
     align-items: center !important;
-    width: calc(100% - 190px) !important; /* เว้นพื้นที่ให้ปุ่ม Profile ด้านขวา */
     overflow: visible !important;
 }
 
-/* ข้อความหัวเรื่องหลัก */
 .title-text-exec {
-    font-size: 19px !important; /* ปรับขนาดให้พอดีหน้าจอ */
+    font-size: 19px !important;
     font-weight: 700 !important;
     color: #1E293B !important;
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
     white-space: nowrap !important;
-    overflow: visible !important;
 }
 
 .icon-pulse {
     font-size: 21px !important;
 }
 
-/* ไฮไลต์คำว่า "ความเสี่ยง" */
 .hl-tag-red {
     background: #FEE2E2 !important;
     color: #DC2626 !important;
@@ -467,20 +464,21 @@ body, .gradio-container {
     box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25) !important;
 }
 
-/* ปุ่มสถานะผู้ใช้: ลอยอยู่มุมบนขวาสุด ไม่เบียดข้อความ */
+/* ปุ่มสิทธิ์ผู้ใช้: ลอยอยู่ที่มุมขวาบนตลอดเวลา ไม่กระทบกับข้อความ */
 .profile-capsule {
     position: absolute !important;
-    top: 0px !important;
-    right: 0px !important;
+    top: 16px !important;
+    right: 24px !important;
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
     background: #F8FAFC !important;
     border: 1px solid #E2E8F0 !important;
-    padding: 5px 12px !important;
+    padding: 6px 14px !important;
     border-radius: 30px !important;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03) !important;
     z-index: 10 !important;
+    width: fit-content !important;
 }
 
 .status-dot {
@@ -512,7 +510,6 @@ body, .gradio-container {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
-    margin-top: 2px !important;
 }
 
 .sub-text-exec b {
@@ -853,11 +850,10 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
             export_btn = gr.Button("📄 Export PDF / JPG", elem_classes=["export-btn"])
 
         # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
-        # ========== พื้นที่ขวา: แดชบอร์ดหลัก ==========
         with gr.Column(scale=8):
             with gr.Row(elem_classes=["executive-header-card"]):
-                # รวมเนื้อหาและปุ่ม Profile ไว้ในบล็อกเดียว ไม่เบียดพื้นที่กัน
-                profile_badge = gr.HTML("""
+                # 1. กล่องหัวข้อคงที่ (Static) ไม่โดนฟังก์ชันอื่นเขียนทับ
+                gr.HTML("""
                 <div class="header-inner">
                     <div class="header-top-row">
                         <div class="title-text-exec">
@@ -873,12 +869,15 @@ with gr.Blocks(title="ระบบประเมินความเสี่�
                     <div class="sub-text-exec">
                         🏢 หน่วยงานกำกับดูแล: <b>สำนักงานไปรษณีย์เขต 3</b> <span class="divider">|</span> พัฒนาระบบโดย: <b>ส่วนการตลาดและบริการลูกค้า</b>
                     </div>
-                    <!-- ปุ่ม Profile ลอยอยู่มุมบนขวาสุด ไม่กินพื้นที่บรรทัดข้อความ -->
-                    <div class="profile-capsule">
-                        <span class="status-dot"></span>
-                        <span class="user-text">👤 Guest</span>
-                        <span class="role-pill">OFFICER</span>
-                    </div>
+                </div>
+                """)
+
+                # 2. ตัวแปร profile_badge สำหรับ Event/Outputs ที่บรรทัด 963 โดยเฉพาะ
+                profile_badge = gr.HTML("""
+                <div class="profile-capsule">
+                    <span class="status-dot"></span>
+                    <span class="user-text">👤 Guest</span>
+                    <span class="role-pill">OFFICER</span>
                 </div>
                 """)
 
