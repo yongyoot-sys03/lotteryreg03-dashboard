@@ -14,9 +14,10 @@ REGION_MAP = {
     "ร้อยเอ็ด": "45xxx ร้อยเอ็ด"
 }
 
+import time
+
 def load_real_data():
     try:
-        # 1. เพิ่ม timestamp ป้องกัน Google Sheets แคชไฟล์ CSV เก่า
         cache_buster = int(time.time())
         url = f"https://docs.google.com/spreadsheets/d/11COh7oHLLJjsUOBTDmSRQqZADl1oVTZ3HnACcDnacdc/export?format=csv&gid=2062579029&_cb={cache_buster}"
         df = pd.read_csv(url)
@@ -34,23 +35,33 @@ def load_real_data():
             col_p: 'P', col_s: 'S'
         })
         
-        df['Zipcode'] = df['Zipcode'].astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
-        df['Raw_Branch'] = df['Raw_Branch'].astype(str).str.strip()
-        df['Branch'] = df['Zipcode'] + " " + df['Raw_Branch']
+        # แปลงวันที่ก่อนเพื่อไม่ให้แถววันที่ว่างหลุดไป
+        df['Date'] = df['Date'].astype(str).str.strip()
+        df['Date_parsed'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
+        df['Date_parsed'] = df['Date_parsed'].fillna(pd.to_datetime(df['Date'], format='%d/%m/%Y', errors='coerce'))
+        df['Date_parsed'] = df['Date_parsed'].fillna(pd.to_datetime(df['Date'], errors='coerce'))
         
-        df['Region_Display'] = df['Region'].astype(str).str.strip().map(lambda x: REGION_MAP.get(x, x))
+        # กรองเฉพาะแถวที่มีวันที่ถูกต้อง
+        df = df[df['Date_parsed'].notna()].copy()
+
+        # สำหรับแถวที่ไม่มีรายการค้าง (ค่าว่าง) ให้ใส่ค่าเริ่มต้นเป็นระบบภาพรวม
+        df['Zipcode'] = df['Zipcode'].fillna('').astype(str).str.replace(r'\.0$', '', regex=True).str.strip()
+        df['Raw_Branch'] = df['Raw_Branch'].fillna('-').astype(str).str.strip()
         
+        # หากแถวไหนไม่มีชื่อสาขา (เช่น แถวลงบันทึกไม่มีรายการค้าง) ให้ตั้งเป็น "ทุกที่ทำการปกติ (ไม่มีงานค้าง)"
+        df['Branch'] = df.apply(
+            lambda r: f"{r['Zipcode']} {r['Raw_Branch']}".strip() if r['Raw_Branch'] not in ['', '-', 'nan'] else "ทุกที่ทำการปกติ (ไม่มีงานค้าง)", 
+            axis=1
+        )
+        
+        df['Region'] = df['Region'].fillna('ภาพรวม ปข.3').astype(str).str.strip()
+        df['Region_Display'] = df['Region'].map(lambda x: REGION_MAP.get(x, x))
+        
+        # แปลงยอดชิ้นงาน ค้าง P และ ค้าง S เป็น 0 หากเป็นค่าว่าง
         df['P'] = pd.to_numeric(df['P'], errors='coerce').fillna(0)
         df['S'] = pd.to_numeric(df['S'], errors='coerce').fillna(0)
         df['Total'] = df['P'] + df['S']
-        df = df[df['Raw_Branch'].notna() & (df['Raw_Branch'] != '') & (df['Raw_Branch'] != 'nan')]
         
-        # 2. บังคับอ่านแบบ เดือน/วัน/ปี (M/D/YYYY) เพื่อให้ 11/4/2026 คือ 4 พ.ย. 2026 ถูกต้อง
-        df['Date'] = df['Date'].astype(str).str.strip()
-        df['Date_parsed'] = pd.to_datetime(df['Date'], format='%m/%d/%Y', errors='coerce')
-        df['Date_parsed'] = df['Date_parsed'].fillna(pd.to_datetime(df['Date'], errors='coerce'))
-        
-        df = df[df['Date_parsed'].notna()]
         return df
     except Exception:
         return pd.DataFrame()
@@ -228,7 +239,11 @@ def update_dashboard(selected_time_days, selected_region_display, selected_branc
         height=270
     )
 
-    # 4. Bar Chart Top 5
+    # 4. Bar Chart Top 5: หากยอดรวมเป็น 0 ทั้งหมด ไม่ต้องวาดแท่งกราฟค้างเดิม
+    if latest_df.empty or latest_df['Total'].sum() == 0:
+        top5_plot = pd.DataFrame()
+    else:
+        top5_plot = latest_df[latest_df['Total'] > 0].head(5).iloc[::-1]
     top5_plot = latest_df.head(5).iloc[::-1]
     fig_bar = go.Figure()
     if not top5_plot.empty:
